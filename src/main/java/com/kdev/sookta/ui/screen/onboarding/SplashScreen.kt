@@ -1,19 +1,20 @@
 package com.kdev.sookta.ui.screen.onboarding
 
+
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.kdev.sookta.ui.theme.LeafGreen
+import com.kdev.sookta.R
 import com.kdev.sookta.ui.theme.LightBrown
-import com.kdev.sookta.ui.theme.YellowMustard
 import kotlinx.coroutines.delay
 
 
@@ -31,6 +32,10 @@ fun SplashScreen(navController: NavController) {
         contentAlignment = Alignment.Center,
         modifier = Modifier.fillMaxSize().background(color = LightBrown)
     ) {
-        Text(text = "SOOK-TA", fontSize = 48.sp, color = LeafGreen)
+        Image(
+            painter = painterResource(id = R.drawable.sookta_logo),
+            contentDescription = "SookTa Logo",
+            modifier = Modifier.width(250.dp)
+        )
     }
 }
