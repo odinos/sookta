@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -43,7 +44,8 @@ fun MainScreen() {
                     )
                 }
             }
-        }
+        },
+        containerColor = Color.Transparent
     ) { paddingValues ->
         // This NavHost controls the content area ABOVE the bottom bar
         NavHost(

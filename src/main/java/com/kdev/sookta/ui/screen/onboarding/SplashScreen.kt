@@ -11,6 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.kdev.sookta.ui.theme.LeafGreen
+import com.kdev.sookta.ui.theme.LightBrown
+import com.kdev.sookta.ui.theme.YellowMustard
 import kotlinx.coroutines.delay
 
 
@@ -26,8 +29,8 @@ fun SplashScreen(navController: NavController) {
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize().background(Color(0xFFFDF8E1))
+        modifier = Modifier.fillMaxSize().background(color = LightBrown)
     ) {
-        Text(text = "SOOK-TA", fontSize = 48.sp, color = Color(0xFF5C9A81))
+        Text(text = "SOOK-TA", fontSize = 48.sp, color = LeafGreen)
     }
 }
