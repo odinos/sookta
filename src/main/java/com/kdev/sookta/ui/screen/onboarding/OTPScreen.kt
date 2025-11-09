@@ -16,13 +16,13 @@ fun OTPScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("OTP Screen")
+        Text("Setup profile")
         Spacer(Modifier.height(20.dp))
-        Text("กรุณากรอกรหัส OTP 4 หลัก")
+        Text("กรอกชื่อและนามสกุล")
         // Add OTP input field here
         Spacer(Modifier.height(20.dp))
         Button(onClick = { navController.navigate("avatar_selection") }) {
-            Text("ยืนยันเพื่อเข้าระบบ")
+            Text("Save Choice Avatar")
         }
     }
 }
