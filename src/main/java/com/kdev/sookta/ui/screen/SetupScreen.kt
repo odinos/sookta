@@ -1,6 +1,5 @@
 package com.kdev.sookta.ui.screen
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
