@@ -7,23 +7,38 @@ import kotlinx.coroutines.flow.Flow
 // 1. Define the table (Entity)
 @Entity(tableName = "user_preferences")
 data class UserPreference(
-    @PrimaryKey val id: Int = 1, // Use a fixed ID for single-row preference table
-    @ColumnInfo(name = "language") val language: String
+    @PrimaryKey val id: Int = 1,
+    @ColumnInfo(name = "language") val language: String = "TH",
+    @ColumnInfo(name = "user_name") val userName: String? = null,
+    @ColumnInfo(name = "age") val age: String? = null,      // เพิ่ม
+    @ColumnInfo(name = "gender") val gender: String? = null, // เพิ่ม
+    @ColumnInfo(name = "weight") val weight: String? = null, // เพิ่ม
+    @ColumnInfo(name = "height") val height: String? = null, // เพิ่ม
+    @ColumnInfo(name = "avatar_path") val avatarPath: String? = null,
+    @ColumnInfo(name = "is_setup_completed") val isSetupCompleted: Boolean = false
 )
 
-// 2. Define Data Access Object (DAO)
 @Dao
 interface UserPreferenceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPreference(preference: UserPreference)
 
+    // อัปเดตภาษา
+    @Query("UPDATE user_preferences SET language = :lang WHERE id = 1")
+    suspend fun updateLanguage(lang: String)
+
     @Query("SELECT * FROM user_preferences WHERE id = 1")
     fun getPreference(): Flow<UserPreference?>
+
+    @Query("UPDATE user_preferences SET user_name = :name, age = :age, gender = :gender, weight = :weight, height = :height WHERE id = 1")
+    suspend fun updatePersonalInfo(name: String, age: String, gender: String, weight: String, height: String)
+
+    // อัปเดตรูปและจบการทำงาน (เรียกใช้หน้าสุดท้าย)
+    @Query("UPDATE user_preferences SET avatar_path = :avatar, is_setup_completed = 1 WHERE id = 1")
+    suspend fun updateAvatarAndFinish(avatar: String)
 }
 
-
-// 3. Define the Database class
-@Database(entities = [UserPreference::class], version = 1, exportSchema = false)
+@Database(entities = [UserPreference::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userPreferenceDao(): UserPreferenceDao
 
@@ -37,7 +52,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() //ล้างข้อมูลเก่าเมื่อแก้โครงสร้าง (ใช้เฉพาะตอน Dev)
+                    .build()
                 INSTANCE = instance
                 instance
             }

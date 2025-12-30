@@ -14,13 +14,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kdev.sookta.ui.screen.SetupScreen
 import com.kdev.sookta.ui.screen.main.EvaluationFormScreen
+import com.kdev.sookta.ui.screen.main.EvaluationMenuScreen
+import com.kdev.sookta.ui.screen.main.FinalResultScreen
+import com.kdev.sookta.ui.screen.main.InitialRiskScreen
 import com.kdev.sookta.ui.screen.main.MainScreen
-import com.kdev.sookta.ui.screen.main.ResultScreen
 import com.kdev.sookta.ui.screen.onboarding.AvatarSelectionScreen
 import com.kdev.sookta.ui.screen.onboarding.LanguageSelectionScreen
-import com.kdev.sookta.ui.screen.onboarding.LoginScreen
-import com.kdev.sookta.ui.screen.onboarding.OTPScreen
 import com.kdev.sookta.ui.screen.onboarding.SplashScreen
 import com.kdev.sookta.ui.theme.SooktaTheme
 
@@ -55,19 +56,25 @@ fun AppNavigation() {
         // --- Onboarding Flow ---
         composable("splash") { SplashScreen(navController) }
         composable("language_selection") { LanguageSelectionScreen(navController) }
-        composable("login") { LoginScreen(navController) }
-        composable("otp") { OTPScreen(navController) }
         composable("avatar_selection") { AvatarSelectionScreen(navController) }
+        composable("setup") { SetupScreen(navController) }
+        composable("avatar_selection") { AvatarSelectionScreen(navController) }
+        composable("main") { MainScreen(navController) }
+        composable("evaluation_menu") { EvaluationMenuScreen(navController) }
 
-        // --- Main App Flow ---
-        composable("main") { MainScreen() }
-
-        // --- Standalone screens outside main navigation ---
-        // These are pages you navigate to from within the main flow
         composable("evaluation_form/{activityName}") { backStackEntry ->
-            val activityName = backStackEntry.arguments?.getString("activityName") ?: "Unknown"
+            val activityName = backStackEntry.arguments?.getString("activityName") ?: "General"
             EvaluationFormScreen(navController, activityName)
         }
-        composable("result") { ResultScreen(navController) }
+        composable("initial_risk/{activityName}/{score}") { backStackEntry ->
+            val activityName = backStackEntry.arguments?.getString("activityName") ?: "-"
+            val score = backStackEntry.arguments?.getString("score")?.toIntOrNull() ?: 0
+            InitialRiskScreen(navController, activityName, score)
+        }
+        composable("final_result/{oldScore}/{newScore}") { backStackEntry ->
+            val oldScore = backStackEntry.arguments?.getString("oldScore")?.toIntOrNull() ?: 0
+            val newScore = backStackEntry.arguments?.getString("newScore")?.toIntOrNull() ?: 0
+            FinalResultScreen(navController, oldScore, newScore)
+        }
     }
 }
