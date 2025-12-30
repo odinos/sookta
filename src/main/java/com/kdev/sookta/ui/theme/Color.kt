@@ -12,3 +12,6 @@ val Pink40 = Color(0xFF7D5260)
 val LeafGreen = Color(0xFF5C9A81)
 val LightBrown = Color(0xFFFDF8E1)
 val YellowMustard = Color(0xFFFFB931)
+
+val SooktaGreen = Color(0xFF5C9A81)
+val SooktaDarkGreen = Color(0xFF2E7D32)

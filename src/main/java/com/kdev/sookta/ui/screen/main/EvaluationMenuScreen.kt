@@ -1,0 +1,116 @@
+package com.kdev.sookta.ui.screen.main
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.kdev.sookta.ui.component.AppBackground
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EvaluationMenuScreen(navController: NavController) {
+    // รายการกิจกรรมที่จะประเมิน
+    val activities = listOf(
+        "เก็บผลผลิตบนต้น",
+        "ขุดหลุมปลูก",
+        "คัดเมล็ด",
+        "ดันรถเข็น",
+        "แบกตะกร้ากาแฟ",
+        "พ่นยา",
+        "แบกถุงปุ๋ย"
+    )
+    AppBackground {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "เลือกประเภทงาน",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "กลับ",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF5C9A81) // สีเขียวธีม Sookta
+                    )
+                )
+            },
+            containerColor = Color.Transparent
+        ) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "โปรดเลือกกิจกรรม",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.Gray
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(activities) { activity ->
+                        ActivityCard(name = activity) {
+                            // ส่งชื่อกิจกรรมไปหน้า Form
+                            navController.navigate("evaluation_form/$activity")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ActivityCard(name: String, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .height(120.dp) // เพิ่มความสูงเล็กน้อยให้ดูสวยงาม
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                color = Color(0xFF2E7D32),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    }
+}

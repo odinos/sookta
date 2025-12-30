@@ -1,0 +1,132 @@
+package com.kdev.sookta.ui.screen.main
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+
+@Composable
+fun InitialRiskScreen(navController: NavController, activityName: String, initialScore: Int) {
+    // รายการวิธีแก้ปัญหา (Mock Data ตามประเภทงาน)
+    val potentialSolutions = listOf(
+        SolutionItem("ใช้อุปกรณ์ช่วยยก (Mechanical Aid)", reductionPoint = 3),
+        SolutionItem("ปรับท่าทางให้ถูกต้อง (Ergonomics)", reductionPoint = 2),
+        SolutionItem("ลดน้ำหนักของวัตถุ", reductionPoint = 2),
+        SolutionItem("เพิ่มเวลาพัก (Rest Break)", reductionPoint = 1)
+    )
+
+    // State สำหรับเก็บว่า User เลือกวิธีไหนบ้าง
+    val selectedSolutions = remember { mutableStateListOf<SolutionItem>() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("ผลการประเมินเบื้องต้น", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("กิจกรรม: $activityName", color = Color.Gray)
+
+        Spacer(Modifier.height(20.dp))
+
+        // แสดงคะแนนความเสี่ยงปัจจุบัน (วงกลมสีแดง)
+        RiskScoreCircle(score = initialScore, label = "ความเสี่ยงสูง")
+
+        Spacer(Modifier.height(20.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)), // สีส้มอ่อน
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            PaddingValues(16.dp)
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("คำแนะนำเพื่อลดความเสี่ยง", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("กรุณาเลือกมาตรการที่คุณจะนำไปปรับปรุง:", fontSize = 14.sp, color = Color.DarkGray)
+
+                Spacer(Modifier.height(10.dp))
+
+                // รายการ Checkbox
+                potentialSolutions.forEach { solution ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                if (selectedSolutions.contains(solution)) {
+                                    selectedSolutions.remove(solution)
+                                } else {
+                                    selectedSolutions.add(solution)
+                                }
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = selectedSolutions.contains(solution),
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) selectedSolutions.add(solution) else selectedSolutions.remove(solution)
+                            }
+                        )
+                        Text(solution.name)
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(30.dp))
+
+        Button(
+            onClick = {
+                // คำนวณคะแนนที่ลดลง
+                val totalReduction = selectedSolutions.sumOf { it.reductionPoint }
+                var finalScore = initialScore - totalReduction
+                if (finalScore < 1) finalScore = 1 // คะแนนต่ำสุดคือ 1
+
+                // ไปหน้าผลลัพธ์สุดท้าย
+                navController.navigate("final_result/$initialScore/$finalScore")
+            },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81)),
+            enabled = selectedSolutions.isNotEmpty() // ต้องเลือกวิธีแก้ก่อนถึงกดได้
+        ) {
+            Text("ประมวลผลอีกครั้ง (Re-evaluate)")
+        }
+    }
+}
+
+// UI วงกลมแสดงคะแนน
+@Composable
+fun RiskScoreCircle(score: Int, label: String) {
+    val color = when {
+        score >= 7 -> Color.Red
+        score >= 4 -> Color(0xFFFFA000) // ส้ม
+        else -> Color.Green
+    }
+
+    Box(
+        modifier = Modifier
+            .size(150.dp)
+            .background(Color.White, shape = RoundedCornerShape(100))
+            .border(8.dp, color, RoundedCornerShape(100)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "$score/10", fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = label, fontSize = 14.sp, color = Color.Gray)
+        }
+    }
+}
+
+data class SolutionItem(val name: String, val reductionPoint: Int)
