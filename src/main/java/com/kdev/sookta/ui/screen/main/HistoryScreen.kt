@@ -77,7 +77,7 @@ fun HistoryScreen(navController: NavController) {
 
                 // ปุ่มค้นหา (Optional)
                 IconButton(
-                    onClick = { /* TODO: Search */ },
+                    onClick = { print("search") },
                     modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape)
                 ) {
                     Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)

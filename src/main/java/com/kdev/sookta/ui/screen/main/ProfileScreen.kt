@@ -166,21 +166,21 @@ fun ProfileScreen(navController: NavController) {
                 ProfileMenuItem(
                     icon = Icons.Default.Description,
                     text = "ข้อกำหนดและเงื่อนไข",
-                    onClick = { navController.navigate("terms") } // แก้จาก TODO เป็น terms
+                    onClick = { navController.navigate("terms") }
                 )
 
                 // 4. ความช่วยเหลือ และคำแนะนำการใช้งาน
                 ProfileMenuItem(
                     icon = Icons.AutoMirrored.Filled.HelpOutline,
                     text = "ความช่วยเหลือ และคำแนะนำการใช้งาน",
-                    onClick = { navController.navigate("help") } // แก้จาก TODO เป็น help
+                    onClick = { navController.navigate("help") }
                 )
 
                 // 5. ติดต่อเรา
                 ProfileMenuItem(
                     icon = Icons.Default.Call,
                     text = "ติดต่อเรา",
-                    onClick = { navController.navigate("contact") } // แก้จาก TODO เป็น contact
+                    onClick = { navController.navigate("contact") }
                 )
 
                 Spacer(Modifier.height(40.dp))
