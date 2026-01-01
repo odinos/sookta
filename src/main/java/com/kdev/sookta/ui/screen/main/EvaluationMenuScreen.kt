@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -15,12 +15,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.kdev.sookta.ui.component.AppBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvaluationMenuScreen(navController: NavController) {
-    // รายการกิจกรรมที่จะประเมิน
+
     val activities = listOf(
         "เก็บผลผลิตบนต้น",
         "ขุดหลุมปลูก",
@@ -30,57 +29,61 @@ fun EvaluationMenuScreen(navController: NavController) {
         "พ่นยา",
         "แบกถุงปุ๋ย"
     )
-    AppBackground {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            "เลือกประเภทงาน",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "กลับ",
-                                tint = Color.White
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF5C9A81) // สีเขียวธีม Sookta
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "เลือกประเภทงาน",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
                     )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "กลับ",
+                            tint = Color.White
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF5C9A81) // สีเขียวธีม Sookta
                 )
-            },
-            containerColor = Color.Transparent
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
+            )
+        },
+        containerColor = Color(0xFFFDF8E1) // สีพื้นหลังครีมอ่อน
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
+        ) {
+
+            Spacer(Modifier.height(16.dp))
+
+            Text(
+                "โปรดเลือกกิจกรรมที่ต้องการประเมิน",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Gray
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.weight(1f), // [สำคัญ 1] ใส่ weight เพื่อให้ Grid ขยายเต็มพื้นที่ที่เหลือ
+                contentPadding = PaddingValues(bottom = 32.dp) // [สำคัญ 2] เผื่อที่ด้านล่างไว้ 32dp กันปุ่มโดนบัง
             ) {
-                Text(
-                    "โปรดเลือกกิจกรรม",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.Gray
-                )
-
-                Spacer(Modifier.height(16.dp))
-
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(activities) { activity ->
-                        ActivityCard(name = activity) {
-                            // ส่งชื่อกิจกรรมไปหน้า Form
-                            navController.navigate("evaluation_form/$activity")
-                        }
+                items(activities) { activity ->
+                    ActivityCard(name = activity) {
+                        // ส่งชื่อกิจกรรมไปหน้า Form
+                        navController.navigate("evaluation_form/$activity")
                     }
                 }
             }
@@ -93,7 +96,7 @@ fun ActivityCard(name: String, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier
-            .height(120.dp) // เพิ่มความสูงเล็กน้อยให้ดูสวยงาม
+            .height(120.dp)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(4.dp)
@@ -107,7 +110,7 @@ fun ActivityCard(name: String, onClick: () -> Unit) {
             Text(
                 text = name,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 18.sp, // ปรับขนาดตัวอักษรให้ใหญ่ขึ้นนิดนึงให้อ่านง่าย
                 color = Color(0xFF2E7D32),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )

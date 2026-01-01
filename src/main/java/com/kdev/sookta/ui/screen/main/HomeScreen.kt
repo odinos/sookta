@@ -9,10 +9,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AccessibilityNew
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -40,7 +40,7 @@ fun HomeScreen(navController: NavController) {
     val db = remember { AppDatabase.getDatabase(context) }
     val tts = rememberTextToSpeech()
 
-    // ดึงข้อมูล User จาก Database แบบ Real-time
+
     val userPref by db.userPreferenceDao().getPreference().collectAsState(initial = null)
     AppBackground {
         Column(
@@ -49,7 +49,6 @@ fun HomeScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
 
-            // --- ส่วนหัว (Header): Avatar + ชื่อ ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,8 +106,7 @@ fun HomeScreen(navController: NavController) {
                         color = Color(0xFF5C9A81)
                     )
                     SpeakButton(
-                        textToSpeak = "สวัสดี ยินดีต้อนรับสู่ แอพพลิเคชั่น สุขท่า ค่ะ คุณ" + userPref?.userName
-                            ?: "ผู้ใช้งาน", ttsManager = tts, modifier = Modifier.size(24.dp)
+                        textToSpeak = ("สวัสดี ยินดีต้อนรับสู่ แอพพลิเคชั่น สุขท่า ค่ะ คุณ" + userPref?.userName), ttsManager = tts, modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -150,7 +148,7 @@ fun HomeScreen(navController: NavController) {
                 item {
                     HomeMenuCard(
                         title = "ความรู้ทั่วไป",
-                        icon = Icons.Default.MenuBook,
+                        icon = Icons.AutoMirrored.Filled.MenuBook,
                         color = Color(0xFFFFF3E0),
                         onClick = { /* Navigate to Knowledge */ }
                     )

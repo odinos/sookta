@@ -69,8 +69,8 @@ fun MainScreen(rootNavController: NavController) {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable("home") { HomeScreen(rootNavController) }
-            composable("history") { HistoryScreen(mainNavController) }
-            composable("profile") { ProfileScreen(mainNavController) }
+            composable("history") { HistoryScreen(rootNavController) }
+            composable("profile") { ProfileScreen(rootNavController) }
         }
     }
 }

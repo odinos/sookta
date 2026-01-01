@@ -15,11 +15,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kdev.sookta.ui.screen.SetupScreen
+import com.kdev.sookta.ui.screen.main.ContactScreen
 import com.kdev.sookta.ui.screen.main.EvaluationFormScreen
 import com.kdev.sookta.ui.screen.main.EvaluationMenuScreen
 import com.kdev.sookta.ui.screen.main.FinalResultScreen
+import com.kdev.sookta.ui.screen.main.HelpScreen
 import com.kdev.sookta.ui.screen.main.InitialRiskScreen
 import com.kdev.sookta.ui.screen.main.MainScreen
+import com.kdev.sookta.ui.screen.main.TermsScreen
 import com.kdev.sookta.ui.screen.onboarding.AvatarSelectionScreen
 import com.kdev.sookta.ui.screen.onboarding.LanguageSelectionScreen
 import com.kdev.sookta.ui.screen.onboarding.SplashScreen
@@ -56,7 +59,6 @@ fun AppNavigation() {
         // --- Onboarding Flow ---
         composable("splash") { SplashScreen(navController) }
         composable("language_selection") { LanguageSelectionScreen(navController) }
-        composable("avatar_selection") { AvatarSelectionScreen(navController) }
         composable("setup") { SetupScreen(navController) }
         composable("avatar_selection") { AvatarSelectionScreen(navController) }
         composable("main") { MainScreen(navController) }
@@ -76,5 +78,9 @@ fun AppNavigation() {
             val newScore = backStackEntry.arguments?.getString("newScore")?.toIntOrNull() ?: 0
             FinalResultScreen(navController, oldScore, newScore)
         }
+
+        composable("terms") { TermsScreen(navController) }
+        composable("help") { HelpScreen(navController) }
+        composable("contact") { ContactScreen(navController) }
     }
 }

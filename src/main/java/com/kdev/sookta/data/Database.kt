@@ -53,7 +53,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app_database"
                 )
-                    .fallbackToDestructiveMigration() //ล้างข้อมูลเก่าเมื่อแก้โครงสร้าง (ใช้เฉพาะตอน Dev)
+                    .fallbackToDestructiveMigration(false)
                     .build()
                 INSTANCE = instance
                 instance
