@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850917807298",
+    "project_id": "sookta-9999z",
+    "storage_bucket": "sookta-9999z.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850917807298:android:d49311be556595a7cbd75b",
+        "android_client_info": {
+          "package_name": "com.kdev.sookta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUt8mo9GOYwRipKsLKBBtEBVaOwwn4kno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
