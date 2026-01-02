@@ -73,6 +73,10 @@ fun AppNavigation() {
         composable("avatar_selection") { AvatarSelectionScreen(navController) }
         composable("main") { MainScreen(navController) }
         composable("evaluation_menu") { EvaluationMenuScreen(navController) }
+        composable("terms") { TermsScreen(navController) }
+        composable("help") { HelpScreen(navController) }
+        composable("contact") { ContactScreen(navController) }
+        composable("history") { HistoryScreen(navController) }
 
         composable("evaluation_form/{activityName}") { backStackEntry ->
             val activityName = backStackEntry.arguments?.getString("activityName") ?: "General"
@@ -80,16 +84,23 @@ fun AppNavigation() {
         }
         composable("initial_risk/{activityName}/{score}") { backStackEntry ->
             val activityName = backStackEntry.arguments?.getString("activityName") ?: "-"
-            val score = backStackEntry.arguments?.getString("score")
-            InitialRiskScreen(navController, activityNameArg = activityName, initialScoreArg = score)
+            // การรับค่า score ที่ส่งมาจาก EvaluationForm (ซึ่งอาจเป็นทศนิยม)
+            // เราใช้ toDoubleOrNull แล้วแปลงเป็น toInt() เพื่อให้เข้ากับ Signature ของหน้าจอ
+            val scoreString = backStackEntry.arguments?.getString("score")
+            val score = scoreString?.toDoubleOrNull()?.toInt() ?: 0
+
+            InitialRiskScreen(navController, activityName, score)
         }
-        composable("final_result_screen") {
-            FinalResultScreen(navController)
+        composable("final_result/{oldScore}/{newScore}") { backStackEntry ->
+            val oldScoreString = backStackEntry.arguments?.getString("oldScore")
+            val newScoreString = backStackEntry.arguments?.getString("newScore")
+
+            val oldScore = oldScoreString?.toDoubleOrNull()?.toInt() ?: 0
+            val newScore = newScoreString?.toDoubleOrNull()?.toInt() ?: 0
+
+            FinalResultScreen(navController, oldScore, newScore)
         }
 
-        composable("terms") { TermsScreen(navController) }
-        composable("help") { HelpScreen(navController) }
-        composable("contact") { ContactScreen(navController) }
-        composable("history") { HistoryScreen(navController) }
+
     }
 }

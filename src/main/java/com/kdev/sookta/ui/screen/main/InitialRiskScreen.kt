@@ -21,32 +21,49 @@ import com.kdev.sookta.R
 import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.JobType
-import com.kdev.sookta.model.RiskLevel
+import com.kdev.sookta.model.RebaInputData
 import com.kdev.sookta.utils.ErgoCalculatorHelper
-import kotlin.math.roundToInt
 
 @Composable
-fun InitialRiskScreen(navController: NavController, activityNameArg: String, initialScoreArg: String?) {
-    // 1. รับข้อมูล Object จาก SavedStateHandle (ข้อมูลจริงที่คำนวณมาแล้ว)
+fun InitialRiskScreen(navController: NavController, activityNameArg: String, scoreArg: Int) {
+    // 1. รับข้อมูลจาก SavedStateHandle (ข้อมูล Object ที่ส่งมา)
     val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
     val initialResult = savedStateHandle?.get<ErgoResult>("riskResult")
-    val initialInput = savedStateHandle?.get<ErgoInputData>("inputData")
+    // รับได้ทั้ง ErgoInputData (Lifting/Push) และ RebaInputData (REBA)
+    val inputDataRaw = savedStateHandle?.get<Any>("inputData")
 
-    // Fallback กรณีไม่มีข้อมูล (ป้องกัน Crash)
-    if (initialResult == null || initialInput == null) {
-        Text("Error: Missing Data", modifier = Modifier.padding(16.dp))
+    // Fallback กรณีข้อมูลไม่มา
+    if (initialResult == null || inputDataRaw == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("ไม่พบข้อมูลการประเมิน กรุณาลองใหม่อีกครั้ง", color = Color.Red)
+        }
         return
     }
 
     val displayActivityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
 
-    // 2. State สำหรับการจำลองการแก้ไข (Solution Simulation)
-    // เริ่มต้นให้ค่าเท่ากับ Input เดิม
-    var solutionInput by remember { mutableStateOf(initialInput) }
+    // 2. State สำหรับจำลองการแก้ไข (Simulation)
+    // ตรวจสอบชนิดข้อมูลและ Cast ให้ถูกต้อง
+    var solutionInputIso by remember { mutableStateOf(if (inputDataRaw is ErgoInputData) inputDataRaw else null) }
+    var solutionInputReba by remember { mutableStateOf(if (inputDataRaw is RebaInputData) inputDataRaw else null) }
 
-    // คำนวณความเสี่ยงใหม่ทันทีที่มีการเปลี่ยนค่า (Projected Risk)
-    val finalResult = remember(solutionInput) {
-        ErgoCalculatorHelper.calculateRisk(solutionInput)
+    val jobType = solutionInputIso?.jobType ?: JobType.REBA
+
+    // คำนวณความเสี่ยงใหม่ Real-time
+    val finalResult = remember(solutionInputIso, solutionInputReba) {
+        if (solutionInputIso != null) {
+            // ISO 11228 Case: ต้องเช็คว่าเป็นงานยก หรือ งานเข็น แล้วเรียกฟังก์ชันให้ถูก
+            if (solutionInputIso!!.jobType == JobType.LIFTING) {
+                ErgoCalculatorHelper.calculateLiftingRisk(solutionInputIso!!)
+            } else {
+                ErgoCalculatorHelper.calculatePushPullRisk(solutionInputIso!!)
+            }
+        } else if (solutionInputReba != null) {
+            // REBA Case
+            ErgoCalculatorHelper.calculateRebaRisk(solutionInputReba!!)
+        } else {
+            initialResult // Fallback
+        }
     }
 
     Column(
@@ -56,31 +73,34 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, ini
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(stringResource(R.string.initial_risk_title), fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text(stringResource(R.string.label_activity_format, displayActivityName), color = Color.Gray, fontSize = 14.sp)
+        Text(stringResource(R.string.initial_risk_title), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+        Text("กิจกรรม: $displayActivityName", color = Color.Gray, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(24.dp))
 
         // --- ส่วนแสดงผลความเสี่ยงปัจจุบัน (Before) ---
-        Text("ผลการประเมินปัจจุบัน (Before)", fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(8.dp))
-        RiskScoreCircle(
-            result = initialResult,
-            isLifting = initialInput.jobType == JobType.LIFTING
-        )
+        Text("ผลการประเมินปัจจุบัน (Before)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Spacer(Modifier.height(12.dp))
 
-        // คำแนะนำเบื้องต้นจาก Helper
-        Text(
-            text = "สาเหตุ: ${initialResult.suggestion}",
-            color = Color.Red.copy(alpha = 0.8f),
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
+        RiskScoreCircle(result = initialResult, jobType = jobType)
 
-        Spacer(Modifier.height(20.dp))
+        // คำแนะนำเบื้องต้น
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)), // สีแดงอ่อนแจ้งเตือน
+            modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
+        ) {
+            Text(
+                text = "ข้อเสนอแนะ: ${initialResult.suggestion}",
+                color = Color(0xFFC62828),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(16.dp).fillMaxWidth()
+            )
+        }
 
-        // --- ส่วนปรับปรุง Solution (Simulation) ---
+        Spacer(Modifier.height(24.dp))
+
+        // --- ส่วนจำลองการปรับปรุง (Solution Simulation) ---
         Card(
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // สีฟ้าอ่อน
             modifier = Modifier.fillMaxWidth()
@@ -91,71 +111,62 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, ini
 
                 Spacer(Modifier.height(16.dp))
 
-                if (initialInput.jobType == JobType.LIFTING) {
-                    // --- Sliders สำหรับงานยก ---
+                if (jobType == JobType.LIFTING && solutionInputIso != null) {
+                    // --- Sliders: Lifting ---
+                    SolutionSlider("ลดน้ำหนักวัตถุ (kg)", solutionInputIso!!.loadWeight.toFloat(), 0f..solutionInputIso!!.loadWeight.toFloat()) {
+                        solutionInputIso = solutionInputIso!!.copy(loadWeight = it.toDouble())
+                    }
+                    SolutionSlider("เพิ่มความสูงจุดยก (V) cm", solutionInputIso!!.verticalHeight.toFloat(), solutionInputIso!!.verticalHeight.toFloat()..150f) { // ยิ่งสูง(ใกล้เอว)ยิ่งดีในบาง case หรือปรับให้เข้าใกล้ 75
+                        // Logic: ปรับให้เข้าใกล้ 75 (Standard) หรือ user ปรับเอง
+                        solutionInputIso = solutionInputIso!!.copy(verticalHeight = it.toDouble())
+                    }
+                    SolutionSlider("ลดความถี่ (ครั้ง/นาที)", solutionInputIso!!.liftFrequency.toFloat(), 0.1f..solutionInputIso!!.liftFrequency.toFloat()) {
+                        solutionInputIso = solutionInputIso!!.copy(liftFrequency = it.toDouble())
+                    }
 
-                    // 1. ปรับน้ำหนัก
-                    SolutionSlider(
-                        label = "ลดน้ำหนักวัตถุ (kg)",
-                        value = solutionInput.loadWeight.toFloat(),
-                        range = 0f..initialInput.loadWeight.toFloat(),
-                        onValueChange = { solutionInput = solutionInput.copy(loadWeight = it.toDouble()) }
-                    )
+                } else if (jobType == JobType.PUSH_PULL && solutionInputIso != null) {
+                    // --- Sliders: Push/Pull ---
+                    SolutionSlider("ลดแรงเริ่มต้น (Initial N)", solutionInputIso!!.initialForce.toFloat(), 0f..solutionInputIso!!.initialForce.toFloat()) {
+                        solutionInputIso = solutionInputIso!!.copy(initialForce = it.toDouble())
+                    }
+                    SolutionSlider("ลดแรงเข็นต่อเนื่อง (Sustain N)", solutionInputIso!!.sustainForce.toFloat(), 0f..solutionInputIso!!.sustainForce.toFloat()) {
+                        solutionInputIso = solutionInputIso!!.copy(sustainForce = it.toDouble())
+                    }
 
-                    // 2. ปรับระยะห่าง (H)
-                    SolutionSlider(
-                        label = "ระยะห่างตัว (H) cm",
-                        value = solutionInput.horizontalDist.toFloat(),
-                        range = 25f..maxOf(25f, initialInput.horizontalDist.toFloat()), // ปรับลดลงได้ไม่ต่ำกว่า 25
-                        onValueChange = { solutionInput = solutionInput.copy(horizontalDist = it.toDouble()) }
-                    )
+                } else if (jobType == JobType.REBA && solutionInputReba != null) {
+                    // --- Sliders: REBA (ปรับ Score) ---
+                    // REBA Score เป็น Int แต่ Slider เป็น Float
+                    Text("ปรับปรุงท่าทาง (ลดคะแนนความเสี่ยง)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+                    Spacer(Modifier.height(8.dp))
 
-                    // 3. ปรับความถี่
-                    SolutionSlider(
-                        label = "ความถี่ (ครั้ง/นาที)",
-                        value = solutionInput.liftFrequency.toFloat(),
-                        range = 0.1f..initialInput.liftFrequency.toFloat(),
-                        onValueChange = { solutionInput = solutionInput.copy(liftFrequency = it.toDouble()) }
-                    )
-
-                } else {
-                    // --- Sliders สำหรับงานเข็น (Push/Pull) ---
-
-                    // 1. ลดแรงเริ่มต้น
-                    SolutionSlider(
-                        label = "ลดแรงกระชากเริ่มเข็น (Initial N)",
-                        value = solutionInput.initialForce.toFloat(),
-                        range = 0f..initialInput.initialForce.toFloat(),
-                        onValueChange = { solutionInput = solutionInput.copy(initialForce = it.toDouble()) }
-                    )
-
-                    // 2. ลดแรงเข็นต่อเนื่อง
-                    SolutionSlider(
-                        label = "ลดแรงเข็นต่อเนื่อง (Sustain N)",
-                        value = solutionInput.sustainForce.toFloat(),
-                        range = 0f..initialInput.sustainForce.toFloat(),
-                        onValueChange = { solutionInput = solutionInput.copy(sustainForce = it.toDouble()) }
-                    )
+                    SolutionSliderInt("คะแนนลำตัว (Trunk)", solutionInputReba!!.trunkScore, 1..solutionInputReba!!.trunkScore) {
+                        solutionInputReba = solutionInputReba!!.copy(trunkScore = it)
+                    }
+                    SolutionSliderInt("คะแนนแขน (Upper Arm)", solutionInputReba!!.upperArmScore, 1..solutionInputReba!!.upperArmScore) {
+                        solutionInputReba = solutionInputReba!!.copy(upperArmScore = it)
+                    }
+                    SolutionSliderInt("คะแนนน้ำหนัก (Load)", solutionInputReba!!.loadScore, 0..solutionInputReba!!.loadScore) {
+                        solutionInputReba = solutionInputReba!!.copy(loadScore = it)
+                    }
                 }
 
                 Spacer(Modifier.height(16.dp))
-                Divider()
+                HorizontalDivider(color = Color(0xFFBBDEFB))
                 Spacer(Modifier.height(8.dp))
 
-                // แสดงผลลัพธ์ Real-time หลังปรับ
+                // Result Preview
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("ความเสี่ยงหลังปรับ", fontWeight = FontWeight.Bold)
-                        Text(finalResult.riskLevel.label, color = Color(finalResult.riskLevel.colorHex), fontWeight = FontWeight.Bold)
+                        Text("ความเสี่ยงหลังปรับ", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Text(finalResult.riskLevel.label, color = Color(finalResult.riskLevel.colorHex), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                     Text(
-                        text = if (initialInput.jobType == JobType.LIFTING) "LI: ${String.format("%.2f", finalResult.score)}" else "Ratio: ${String.format("%.2f", finalResult.score)}",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                        text = "Score: ${String.format("%.2f", finalResult.score)}",
+                        fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0)
                     )
                 }
             }
@@ -165,59 +176,87 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, ini
 
         Button(
             onClick = {
-                // ส่งผลลัพธ์ทั้งคู่ไปหน้า Final
+                // ส่งผลลัพธ์ไปหน้า Final
+                // ใช้ key ที่ตกลงกันไว้ (oldScore, newScore ใน route หรือส่ง Object)
+                // ในที่นี้ส่ง Object ผ่าน savedStateHandle เพื่อความครบถ้วน
                 navController.currentBackStackEntry?.savedStateHandle?.set("initialResult", initialResult)
                 navController.currentBackStackEntry?.savedStateHandle?.set("finalResult", finalResult)
 
-                // Navigate
-                navController.navigate("final_result_screen") // ต้องเปลี่ยน route ให้ตรงกับที่คุณตั้งไว้
+                // Route format: final_result/{oldScore}/{newScore} ตาม MainActivity
+                val oldScoreStr = initialResult.score.toInt().toString()
+                val newScoreStr = finalResult.score.toInt().toString()
+                navController.navigate("final_result/$oldScoreStr/$newScoreStr")
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
         ) {
-            Text("บันทึกและสรุปผลการประเมิน")
+            Text("บันทึกและสรุปผลการประเมิน", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
+        Spacer(Modifier.height(50.dp))
     }
 }
 
-// UI Slider ย่อยสำหรับปรับค่า
+// --- Helper UI Components ---
+
 @Composable
 fun SolutionSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, onValueChange: (Float) -> Unit) {
-    Column(modifier = Modifier.padding(bottom = 12.dp)) {
+    Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, fontSize = 14.sp)
-            Text(String.format("%.1f", value), fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
+            Text(label, fontSize = 13.sp)
+            Text(String.format("%.1f", value), fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 13.sp)
         }
         Slider(
             value = value,
             onValueChange = onValueChange,
             valueRange = range,
-            colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF1565C0),
-                activeTrackColor = Color(0xFF1565C0),
-                inactiveTrackColor = Color(0xFFBBDEFB)
-            )
+            colors = SliderDefaults.colors(thumbColor = Color(0xFF1565C0), activeTrackColor = Color(0xFF1565C0), inactiveTrackColor = Color(0xFFBBDEFB))
         )
     }
 }
 
-// UI วงกลมแสดงคะแนน (ปรับปรุงให้รองรับ RiskLevel)
 @Composable
-fun RiskScoreCircle(result: ErgoResult, isLifting: Boolean) {
+fun SolutionSliderInt(label: String, value: Int, range: IntRange, onValueChange: (Int) -> Unit) {
+    Column(modifier = Modifier.padding(bottom = 8.dp)) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, fontSize = 13.sp)
+            Text("$value", fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 13.sp)
+        }
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.toInt()) },
+            valueRange = range.first.toFloat()..range.last.toFloat(),
+            steps = if (range.last - range.first > 0) (range.last - range.first) - 1 else 0,
+            colors = SliderDefaults.colors(thumbColor = Color(0xFF1565C0), activeTrackColor = Color(0xFF1565C0), inactiveTrackColor = Color(0xFFBBDEFB))
+        )
+    }
+}
+
+@Composable
+fun RiskScoreCircle(result: ErgoResult, jobType: JobType) {
     val color = Color(result.riskLevel.colorHex)
-    val scoreLabel = if (isLifting) "LI" else "Ratio"
+    val scoreLabel = when(jobType) {
+        JobType.LIFTING -> "Lifting Index"
+        JobType.PUSH_PULL -> "Risk Ratio"
+        JobType.REBA -> "REBA Score"
+    }
 
     Box(
         modifier = Modifier
             .size(160.dp)
             .background(Color.White, shape = RoundedCornerShape(100))
-            .border(10.dp, color, RoundedCornerShape(100)),
+            .border(8.dp, color, RoundedCornerShape(100)),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = String.format("%.2f", result.score), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = color)
-            Text(text = "$scoreLabel Score", fontSize = 14.sp, color = Color.Gray)
-            Text(text = result.riskLevel.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = color, modifier = Modifier.padding(top = 4.dp))
+            Text(text = String.format("%.1f", result.score), fontSize = 42.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = scoreLabel, fontSize = 12.sp, color = Color.Gray)
+            Text(
+                text = result.riskLevel.label,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = color,
+                modifier = Modifier.padding(top = 4.dp)
+            )
         }
     }
 }
