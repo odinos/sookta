@@ -35,21 +35,42 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 // Import Helper ตัวใหม่
 import com.kdev.sookta.utils.rememberPermissionHelper
-
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EvaluationFormScreen(navController: NavController, activityName: String) {
+fun EvaluationFormScreen(navController: NavController, activityNameArg: String) {
     val context = LocalContext.current
-
+    val activityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
     // State เก็บรูปภาพ
     val selectedBitmaps = remember { mutableStateListOf<Bitmap>() }
 
+    val durationOptions = listOf(
+        stringResource(R.string.dur_opt_1),
+        stringResource(R.string.dur_opt_2),
+        stringResource(R.string.dur_opt_3),
+        stringResource(R.string.dur_opt_4)
+    )
+    val frequencyOptions = listOf(
+        stringResource(R.string.freq_opt_1),
+        stringResource(R.string.freq_opt_2),
+        stringResource(R.string.freq_opt_3)
+    )
+    val weightOptions = listOf(
+        stringResource(R.string.weight_opt_0),
+        stringResource(R.string.weight_opt_1),
+        stringResource(R.string.weight_opt_2),
+        stringResource(R.string.weight_opt_3),
+        stringResource(R.string.weight_opt_4)
+    )
+
     // State ข้อมูลอื่นๆ
+    val defaultWeight = stringResource(R.string.weight_opt_0)
     var selectedDuration by remember { mutableStateOf("") }
     var selectedFrequency by remember { mutableStateOf("") }
-    var selectedWeight by remember { mutableStateOf("0 กก. (ไม่ได้ยก/แบก)") }
+    var selectedWeight by remember(defaultWeight) { mutableStateOf(defaultWeight) }
 
-    // Dropdown States
     var expandedDuration by remember { mutableStateOf(false) }
     var expandedFrequency by remember { mutableStateOf(false) }
     var expandedWeight by remember { mutableStateOf(false) }
@@ -94,10 +115,10 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("แบบฟอร์มประเมิน", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.eval_form_title), color = Color.White, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back_desc), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF5C9A81))
@@ -114,7 +135,7 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "กิจกรรม: $activityName",
+                text = stringResource(R.string.eval_activity_prefix, activityName),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF2E7D32),
@@ -133,7 +154,7 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
                     .padding(8.dp)
             ) {
                 Text(
-                    text = "รูปภาพประกอบ (${selectedBitmaps.size}/4)",
+                    text = stringResource(R.string.eval_images_header, selectedBitmaps.size),
                     fontSize = 14.sp, color = Color.Gray,
                     modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
                 )
@@ -198,7 +219,7 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81)),
                     enabled = !isFull
                 ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("ถ่ายเพิ่ม")
+                    Icon(Icons.Default.CameraAlt, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.btn_camera_add))
                 }
 
                 // ปุ่มอัลบั้ม (ใช้ Helper)
@@ -210,34 +231,34 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
                     modifier = Modifier.weight(1f),
                     enabled = !isFull
                 ) {
-                    Icon(Icons.Default.Image, contentDescription = null); Spacer(Modifier.width(8.dp)); Text("อัลบั้ม")
+                    Icon(Icons.Default.Image, contentDescription = null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.btn_gallery))
                 }
             }
             if (isFull) {
-                Text("เพิ่มได้สูงสุด 4 รูป", fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(top = 4.dp))
+                Text(stringResource(R.string.msg_max_images), fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(top = 4.dp))
             }
 
             Spacer(Modifier.height(24.dp))
-            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
             Spacer(Modifier.height(16.dp))
 
             // --- ส่วนข้อมูลการทำงาน (เหมือนเดิม) ---
-            Text("ข้อมูลการทำงาน", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333), modifier = Modifier.align(Alignment.Start))
+            Text(stringResource(R.string.section_work_info), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333), modifier = Modifier.align(Alignment.Start))
             Spacer(Modifier.height(12.dp))
 
-            SooktaDropdown("ระยะเวลาที่ทำต่อเนื่อง (Duration)", listOf("น้อยกว่า 1 ชั่วโมง", "1 - 2 ชั่วโมง", "2 - 4 ชั่วโมง", "มากกว่า 4 ชั่วโมง"), selectedDuration, { selectedDuration = it }, expandedDuration, { expandedDuration = it })
+            SooktaDropdown(stringResource(R.string.label_duration), durationOptions, selectedDuration, { selectedDuration = it }, expandedDuration, { expandedDuration = it })
             Spacer(Modifier.height(12.dp))
-            SooktaDropdown("ความถี่ในการทำ (Frequency)", listOf("ทำทุกวัน", "2-3 ครั้งต่อสัปดาห์", "ทำนานๆ ครั้ง"), selectedFrequency, { selectedFrequency = it }, expandedFrequency, { expandedFrequency = it })
+            SooktaDropdown(stringResource(R.string.label_frequency), frequencyOptions, selectedFrequency, { selectedFrequency = it }, expandedFrequency, { expandedFrequency = it })
             Spacer(Modifier.height(12.dp))
-            SooktaDropdown("น้ำหนักวัตถุ (ระบุเฉพาะงานยก/แบก)", listOf("0 กก. (ไม่ได้ยก/แบก)", "น้อยกว่า 5 กก.", "5 - 10 กก.", "10 - 20 กก.", "มากกว่า 20 กก."), selectedWeight, { selectedWeight = it }, expandedWeight, { expandedWeight = it })
-            Text("* หากไม่ใช่กิจกรรมยก/แบก ให้คงค่าไว้ที่ 0 กก.", fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
+            SooktaDropdown(stringResource(R.string.label_weight), weightOptions, selectedWeight, { selectedWeight = it }, expandedWeight, { expandedWeight = it })
+            Text(stringResource(R.string.note_weight_hint), fontSize = 12.sp, color = Color.Gray, modifier = Modifier.padding(start = 4.dp, top = 4.dp))
 
             Spacer(Modifier.height(32.dp))
 
             Button(
                 onClick = {
                     val initialScore = (3..9).random()
-                    navController.navigate("initial_risk/$activityName/$initialScore")
+                    navController.navigate("initial_risk/$activityNameArg/$initialScore")
                 },
                 enabled = selectedBitmaps.isNotEmpty() && selectedDuration.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -245,14 +266,14 @@ fun EvaluationFormScreen(navController: NavController, activityName: String) {
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("เริ่มวิเคราะห์ความเสี่ยง", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.btn_start_analyze), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(50.dp))
         }
     }
 }
 
-// Component ย่อย: ImageSlotCard และ SooktaDropdown (ใช้ของเดิมได้เลย หรือ Copy ด้านล่างไปแปะท้ายไฟล์)
+
 @Composable
 fun ImageSlotCard(bitmap: Bitmap?, modifier: Modifier = Modifier, onAddClick: () -> Unit, onDeleteClick: () -> Unit, enabled: Boolean = true) {
     Box(
@@ -274,7 +295,7 @@ fun ImageSlotCard(bitmap: Bitmap?, modifier: Modifier = Modifier, onAddClick: ()
         } else if (enabled) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.AddAPhoto, contentDescription = null, tint = Color.Gray)
-                Text("เพิ่มรูป", fontSize = 12.sp, color = Color.Gray)
+                Text(stringResource(R.string.form_add_photo), fontSize = 12.sp, color = Color.Gray)
             }
         } else {
             Icon(Icons.Default.Image, contentDescription = null, tint = Color.Gray.copy(alpha=0.5f))
@@ -290,7 +311,7 @@ fun SooktaDropdown(label: String, options: List<String>, selectedOption: String,
             value = selectedOption, onValueChange = {}, readOnly = true, label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF5C9A81), unfocusedContainerColor = Color.White, focusedContainerColor = Color.White),
-            modifier = Modifier.fillMaxWidth().menuAnchor()
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
             options.forEach { option -> DropdownMenuItem(text = { Text(option) }, onClick = { onOptionSelected(option); onExpandedChange(false) }) }

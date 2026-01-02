@@ -33,7 +33,8 @@ import com.kdev.sookta.ui.component.AppBackground
 import java.io.File
 import com.kdev.sookta.ui.component.rememberTextToSpeech
 import com.kdev.sookta.ui.component.SpeakButton
-
+import androidx.compose.ui.res.stringResource // ✅ อย่าลืม import
+import com.kdev.sookta.R
 @Composable
 fun HomeScreen(navController: NavController) {
     val context = LocalContext.current
@@ -95,18 +96,19 @@ fun HomeScreen(navController: NavController) {
                 // Greeting Text
                 Column {
                     Text(
-                        text = "สวัสดี,",
+                        text = stringResource(R.string.home_hello),
                         fontSize = 18.sp,
                         color = Color.Gray
                     )
                     Text(
-                        text = userPref?.userName ?: "ผู้ใช้งาน",
+                        text = userPref?.userName ?: stringResource(R.string.home_user_mock),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF5C9A81)
                     )
+                    val welcomeSpeech = stringResource(R.string.welcome_speech, userPref?.userName ?: "")
                     SpeakButton(
-                        textToSpeak = ("สวัสดี ยินดีต้อนรับสู่ แอพพลิเคชั่น สุขท่า ค่ะ คุณ" + userPref?.userName), ttsManager = tts, modifier = Modifier.size(24.dp)
+                        textToSpeak = (welcomeSpeech), ttsManager = tts, modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -114,7 +116,7 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "เมนูหลัก",
+                text = stringResource(R.string.home_start_eval),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF333333)
@@ -124,14 +126,14 @@ fun HomeScreen(navController: NavController) {
 
             // --- ส่วนเมนู (Grid Menu) ---
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(1),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 item {
                     HomeMenuCard(
-                        title = "ประเมินความเสี่ยง",
+                        title = stringResource(R.string.menu_eval_risk),
                         icon = Icons.Default.Info, // แก้เป็น Info ซึ่งมีแน่นอน
                         color = Color(0xFFE8F5E9),
                         onClick = { navController.navigate("evaluation_menu") }
@@ -139,7 +141,7 @@ fun HomeScreen(navController: NavController) {
                 }
                 item {
                     HomeMenuCard(
-                        title = "ท่าบริหาร",
+                        title = stringResource(R.string.menu_exercise),
                         icon = Icons.Default.AccessibilityNew,
                         color = Color(0xFFE1F5FE),
                         onClick = { /* Navigate to Exercise */ }
@@ -147,20 +149,13 @@ fun HomeScreen(navController: NavController) {
                 }
                 item {
                     HomeMenuCard(
-                        title = "ความรู้ทั่วไป",
+                        title = stringResource(R.string.menu_knowledge),
                         icon = Icons.AutoMirrored.Filled.MenuBook,
                         color = Color(0xFFFFF3E0),
                         onClick = { /* Navigate to Knowledge */ }
                     )
                 }
-                item {
-                    HomeMenuCard(
-                        title = "ประวัติการใช้งาน",
-                        icon = Icons.Default.History,
-                        color = Color(0xFFF3E5F5),
-                        onClick = { /* Navigate to History */ }
-                    )
-                }
+
             }
         }
     }

@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.data.AppDatabase
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource // ✅ Import
+import com.kdev.sookta.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,11 +58,11 @@ fun SetupScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ข้อมูลส่วนตัว", color = Color.White) },
+                title = { Text(stringResource(R.string.setup_page_title), color = Color.White) },
                 navigationIcon = {
                     // ปุ่ม Back: กดแล้วย้อนกลับไปหน้าก่อนหน้า (Profile)
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back_desc), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF5C9A81))
@@ -77,7 +79,7 @@ fun SetupScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "แก้ไขข้อมูลของคุณ",
+                text = stringResource(R.string.setup_header_edit),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF5C9A81),
@@ -87,23 +89,23 @@ fun SetupScreen(navController: NavController) {
             Spacer(Modifier.height(20.dp))
 
             // Form Fields
-            SooktaTextField(value = name, onChange = { name = it }, label = "ชื่อเล่น (Name)")
+            SooktaTextField(value = name, onChange = { name = it }, label = stringResource(R.string.label_name))
             Spacer(Modifier.height(12.dp))
 
-            SooktaTextField(value = age, onChange = { age = it }, label = "อายุ (ปี)", isNumber = true)
+            SooktaTextField(value = age, onChange = { age = it }, label = stringResource(R.string.label_age), isNumber = true)
             Spacer(Modifier.height(12.dp))
 
             // Gender Selection
-            Text("เพศ", modifier = Modifier.align(Alignment.Start), color = Color(0xFF5C9A81))
+            Text(stringResource(R.string.label_gender), modifier = Modifier.align(Alignment.Start), color = Color(0xFF5C9A81))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                GenderOption("ชาย", selected = gender == "Male") { gender = "Male" }
-                GenderOption("หญิง", selected = gender == "Female") { gender = "Female" }
+                GenderOption(stringResource(R.string.gender_male), selected = gender == "Male") { gender = "Male" }
+                GenderOption(stringResource(R.string.gender_female), selected = gender == "Female") { gender = "Female" }
             }
 
             Spacer(Modifier.height(12.dp))
-            SooktaTextField(value = weight, onChange = { weight = it }, label = "น้ำหนัก (กก.)", isNumber = true)
+            SooktaTextField(value = weight, onChange = { weight = it }, label = stringResource(R.string.label_weight_kg), isNumber = true)
             Spacer(Modifier.height(12.dp))
-            SooktaTextField(value = height, onChange = { height = it }, label = "ส่วนสูง (ซม.)", isNumber = true)
+            SooktaTextField(value = height, onChange = { height = it }, label = stringResource(R.string.label_height_cm), isNumber = true)
 
             Spacer(Modifier.height(40.dp))
 
@@ -128,7 +130,7 @@ fun SetupScreen(navController: NavController) {
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
             ) {
-                Text("บันทึกข้อมูล", fontSize = 18.sp)
+                Text(stringResource(R.string.btn_save_data), fontSize = 18.sp)
             }
         }
     }

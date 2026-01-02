@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 @Composable
 fun FinalResultScreen(navController: NavController, oldScore: Int, newScore: Int) {
@@ -34,8 +36,8 @@ fun FinalResultScreen(navController: NavController, oldScore: Int, newScore: Int
 
         Spacer(Modifier.height(16.dp))
 
-        Text("การปรับปรุงเสร็จสมบูรณ์!", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C9A81))
-        Text("ระดับความเสี่ยงของคุณลดลงแล้ว", color = Color.Gray)
+        Text(stringResource(R.string.result_success), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C9A81))
+        Text(stringResource(R.string.result_after), color = Color.Gray)
 
         Spacer(Modifier.height(40.dp))
 
@@ -44,9 +46,9 @@ fun FinalResultScreen(navController: NavController, oldScore: Int, newScore: Int
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            ScoreCard("ก่อนปรับปรุง", oldScore, Color.Red)
+            ScoreCard(stringResource(R.string.label_before_improve), oldScore, Color.Red)
             Text(">>>", modifier = Modifier.align(Alignment.CenterVertically), fontSize = 24.sp, color = Color.Gray)
-            ScoreCard("หลังปรับปรุง", newScore, Color(0xFF2E7D32)) // สีเขียวเข้ม
+            ScoreCard(stringResource(R.string.label_after_improve), newScore, Color(0xFF2E7D32)) // สีเขียวเข้ม
         }
 
         Spacer(Modifier.height(60.dp))
@@ -64,13 +66,13 @@ fun FinalResultScreen(navController: NavController, oldScore: Int, newScore: Int
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
         ) {
-            Text("บันทึกผลการประเมิน")
+            Text(stringResource(R.string.btn_save_eval))
         }
 
         Spacer(Modifier.height(16.dp))
 
         TextButton(onClick = { navController.popBackStack() }) {
-            Text("กลับไปแก้ไข", color = Color.Gray)
+            Text(stringResource(R.string.btn_back_edit), color = Color.Gray)
         }
     }
 }

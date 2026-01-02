@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">สุขท่า</string>
+
+    <string name="welcome_to">ยินดีต้อนรับสู่</string>
+    <string name="select_lang_desc">กรุณาเลือกภาษาเพื่อเริ่มต้นใช้งาน</string>
+    <string name="lang_thai">ภาษาไทย</string>
+    <string name="lang_eng">ภาษาอังกฤษ</string>
+    <string name="btn_save_and_start">บันทึกและเริ่มใช้งาน</string>
+    <string name="change_language">เปลี่ยนภาษา</string>
+
+    <string name="nav_home">หน้าแรก</string>
+    <string name="nav_history">ผลตรวจ</string>
+    <string name="nav_profile">ข้อมูลส่วนตัว</string>
+
+    <string name="home_greeting">สวัสดี,</string>
+    <string name="home_start_eval">เริ่มทำแบบประเมิน</string>
+    <string name="home_menu_title">เมนูหลัก</string>
+
+    <string name="profile_title">ข้อมูลส่วนตัว</string>
+    <string name="profile_edit">แก้ไขข้อมูล</string>
+    <string name="profile_history">ประวัติการใช้งาน</string>
+    <string name="profile_settings">ตั้งค่าทั่วไป</string>
+    <string name="logout">ออกจากระบบ</string>
+
+    <string name="btn_next">ถัดไป</string>
+    <string name="btn_back">ย้อนกลับ</string>
+    <string name="btn_confirm">ยืนยัน</string>
+    <string name="loading">กำลังโหลด…</string>
+
+    <string name="contact_title">ติดต่อเรา</string>
+    <string name="contact_info">ข้อมูลการติดต่อทีมงาน Sookta…</string>
+
+    <string name="help_title">ความช่วยเหลือ</string>
+    <string name="help_info">คำแนะนำการใช้งานแอพพลิเคชัน…</string>
+
+    <string name="result_success">การปรับปรุงเสร็จสมบูรณ์!</string>
+    <string name="result_after">หลังปรับปรุง</string>
+    <string name="btn_save_eval">บันทึกผลการประเมิน</string>
+    <string name="btn_back_edit">กลับไปแก้ไข</string>
+
+    <string name="risk_low">ความเสี่ยงต่ำ</string>
+    <string name="risk_medium">ความเสี่ยงปานกลาง</string>
+    <string name="risk_high">ความเสี่ยงสูง</string>
+
+    <string name="menu_language">เปลี่ยนภาษา</string>
+    <string name="menu_contact">ติดต่อเรา</string>
+    <string name="menu_help">ความช่วยเหลือ</string>
+    <string name="menu_terms">เงื่อนไขการใช้งาน</string>
+
+    <string name="menu_eval_risk">ประเมินความเสี่ยง</string>
+    <string name="menu_guide">วิธีใช้งาน</string>
+
+    <string name="eval_menu_title">เลือกประเภทงาน</string>
+    <string name="job_harvest">เก็บผลผลิตบนต้น</string>
+    <string name="job_digging">ขุดหลุมปลูก</string>
+    <string name="job_sorting">คัดเมล็ด</string>
+    <string name="job_cart">ดันรถเข็น</string>
+    <string name="job_basket">แบกตะกร้ากาแฟ</string>
+    <string name="job_spray">พ่นยา</string>
+    <string name="job_fertilizer">แบกถุงปุ๋ย</string>
+
+    <string name="form_add_photo">เพิ่มรูป</string>
+
+    <string name="btn_re_evaluate">ประมวลผลอีกครั้ง</string>
+    <string name="sol_mech_aid">ใช้อุปกรณ์ช่วยยก (Mechanical Aid)</string>
+    <string name="sol_ergo">ปรับท่าทางให้ถูกต้อง (Ergonomics)</string>
+    <string name="sol_weight">ลดน้ำหนักของวัตถุ</string>
+    <string name="sol_rest">เพิ่มเวลาพัก (Rest Break)</string>
+
+    <string name="result_title">หน้าผลลัพธ์</string>
+    <string name="result_risk_point">จุดเสี่ยง: หลังล่าง</string>
+    <string name="result_score">คะแนน:</string>
+    <string name="btn_back_home">กลับสู่หน้าหลัก</string>
+
+    <string name="terms_title">ข้อกำหนดและเงื่อนไข</string>
+    <string name="terms_content">รายละเอียดข้อกำหนดและเงื่อนไข…</string>
+
+    <string name="home_hello">สวัสดี,</string>
+    <string name="home_user_mock">ผู้ใช้งาน</string>
+    <string name="menu_risk_assessment">ประเมินความเสี่ยง</string>
+
+    <string name="search_history_hint">ค้นหาประวัติ…</string>
+
+    <string name="result_completed">การปรับปรุงเสร็จสมบูรณ์!</string>
+    <string name="result_save">บันทึกผลการประเมิน</string>
+    <string name="result_edit">กลับไปแก้ไข</string>
+    <string name="label_after_improve">หลังปรับปรุง</string>
+
+    <string name="menu_exercise">ท่าบริหาร</string>
+    <string name="menu_knowledge">ความรู้ทั่วไป</string>
+    <string name="menu_history">ประวัติการใช้งาน</string>
+
+    <string name="welcome_speech">สวัสดี ยินดีต้อนรับสู่ แอพพลิเคชั่น สุขตา ค่ะ คุณ %1$s</string>
+    <string name="eval_select_desc">โปรดเลือกกิจกรรมที่ต้องการประเมิน</string>
+    <string name="btn_back_desc">กลับ</string>
+
+    <string name="eval_form_title">แบบฟอร์มประเมิน</string>
+    <string name="eval_activity_prefix">กิจกรรม: %1$s</string>
+    <string name="eval_images_header">รูปภาพประกอบ (%1$d/4)</string>
+    <string name="btn_camera_add">ถ่ายเพิ่ม</string>
+    <string name="btn_gallery">อัลบั้ม</string>
+    <string name="msg_max_images">เพิ่มได้สูงสุด 4 รูป</string>
+    <string name="section_work_info">ข้อมูลการทำงาน</string>
+    <string name="note_weight_hint">* หากไม่ใช่กิจกรรมยก/แบก ให้คงค่าไว้ที่ 0 กก.</string>
+    <string name="btn_start_analyze">เริ่มวิเคราะห์ความเสี่ยง</string>
+
+    <string name="label_duration">ระยะเวลาที่ทำต่อเนื่อง (Duration)</string>
+    <string name="label_frequency">ความถี่ในการทำ (Frequency)</string>
+    <string name="label_weight">น้ำหนักวัตถุ (ระบุเฉพาะงานยก/แบก)</string>
+
+    <string name="dur_opt_1">น้อยกว่า 1 ชั่วโมง</string>
+    <string name="dur_opt_2">1 – 2 ชั่วโมง</string>
+    <string name="dur_opt_3">2 – 4 ชั่วโมง</string>
+    <string name="dur_opt_4">มากกว่า 4 ชั่วโมง</string>
+
+    <string name="freq_opt_1">ทำทุกวัน</string>
+    <string name="freq_opt_2">2–3 ครั้งต่อสัปดาห์</string>
+    <string name="freq_opt_3">ทำนานๆ ครั้ง</string>
+
+    <string name="weight_opt_0">0 กก. (ไม่ได้ยก/แบก)</string>
+    <string name="weight_opt_1">น้อยกว่า 5 กก.</string>
+    <string name="weight_opt_2">5 – 10 กก.</string>
+    <string name="weight_opt_3">10 – 20 กก.</string>
+    <string name="weight_opt_4">มากกว่า 20 กก.</string>
+    <string name="label_before_improve">ก่อนปรับปรุง</string>
+
+    <string name="setup_page_title">ข้อมูลส่วนตัว</string>
+    <string name="setup_header_edit">แก้ไขข้อมูลของคุณ</string>
+    <string name="label_name">ชื่อเล่น (Name)</string>
+    <string name="label_age">อายุ (ปี)</string>
+    <string name="label_gender">เพศ</string>
+    <string name="gender_male">ชาย</string>
+    <string name="gender_female">หญิง</string>
+    <string name="label_weight_kg">น้ำหนัก (กก.)</string>
+    <string name="label_height_cm">ส่วนสูง (ซม.)</string>
+    <string name="btn_save_data">บันทึกข้อมูล</string>
+
+    <string name="default_username">ผู้ใช้งานทั่วไป</string>
+    <string name="stat_age">อายุ</string>
+    <string name="stat_weight">น้ำหนัก</string>
+    <string name="stat_height">ส่วนสูง</string>
+    <string name="unit_year">ปี</string>
+    <string name="unit_kg">กก.</string>
+    <string name="unit_cm">ซม.</string>
+
+    <string name="history_title">ผลตรวจย้อนหลัง</string>
+    <string name="history_subtitle">ประวัติการประเมินความเสี่ยงของคุณ</string>
+
+    <string name="initial_risk_title">ผลการประเมินเบื้องต้น</string>
+    <string name="label_activity_format">กิจกรรม: %1$s</string>
+
+    <string name="suggestion_title">คำแนะนำเพื่อลดความเสี่ยง</string>
+    <string name="suggestion_desc">กรุณาเลือกมาตรการที่คุณจะนำไปปรับปรุง:</string>
+</resources>

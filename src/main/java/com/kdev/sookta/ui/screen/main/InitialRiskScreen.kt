@@ -16,19 +16,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 @Composable
 fun InitialRiskScreen(navController: NavController, activityName: String, initialScore: Int) {
+
+    val displayActivityName = activityName.toIntOrNull()?.let { stringResource(it) } ?: activityName
+
     // รายการวิธีแก้ปัญหา (Mock Data ตามประเภทงาน)
     val potentialSolutions = listOf(
-        SolutionItem("ใช้อุปกรณ์ช่วยยก (Mechanical Aid)", reductionPoint = 3),
-        SolutionItem("ปรับท่าทางให้ถูกต้อง (Ergonomics)", reductionPoint = 2),
-        SolutionItem("ลดน้ำหนักของวัตถุ", reductionPoint = 2),
-        SolutionItem("เพิ่มเวลาพัก (Rest Break)", reductionPoint = 1)
+        SolutionItem(stringResource(R.string.sol_mech_aid), reductionPoint = 3),
+        SolutionItem(stringResource(R.string.sol_ergo), reductionPoint = 2),
+        SolutionItem(stringResource(R.string.sol_weight), reductionPoint = 2),
+        SolutionItem(stringResource(R.string.sol_rest), reductionPoint = 1)
     )
 
     // State สำหรับเก็บว่า User เลือกวิธีไหนบ้าง
     val selectedSolutions = remember { mutableStateListOf<SolutionItem>() }
+
+    val riskLabel = when {
+        initialScore >= 7 -> stringResource(R.string.risk_high)
+        initialScore >= 4 -> stringResource(R.string.risk_medium)
+        else -> stringResource(R.string.risk_low)
+    }
 
     Column(
         modifier = Modifier
@@ -37,13 +48,13 @@ fun InitialRiskScreen(navController: NavController, activityName: String, initia
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("ผลการประเมินเบื้องต้น", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text("กิจกรรม: $activityName", color = Color.Gray)
+        Text(stringResource(R.string.initial_risk_title), fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.label_activity_format, displayActivityName), color = Color.Gray)
 
         Spacer(Modifier.height(20.dp))
 
         // แสดงคะแนนความเสี่ยงปัจจุบัน (วงกลมสีแดง)
-        RiskScoreCircle(score = initialScore, label = "ความเสี่ยงสูง")
+        RiskScoreCircle(score = initialScore, label = riskLabel)
 
         Spacer(Modifier.height(20.dp))
 
@@ -53,8 +64,8 @@ fun InitialRiskScreen(navController: NavController, activityName: String, initia
         ) {
             PaddingValues(16.dp)
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("คำแนะนำเพื่อลดความเสี่ยง", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                Text("กรุณาเลือกมาตรการที่คุณจะนำไปปรับปรุง:", fontSize = 14.sp, color = Color.DarkGray)
+                Text(stringResource(R.string.suggestion_title), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(stringResource(R.string.suggestion_desc), fontSize = 14.sp, color = Color.DarkGray)
 
                 Spacer(Modifier.height(10.dp))
 
@@ -101,7 +112,7 @@ fun InitialRiskScreen(navController: NavController, activityName: String, initia
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81)),
             enabled = selectedSolutions.isNotEmpty() // ต้องเลือกวิธีแก้ก่อนถึงกดได้
         ) {
-            Text("ประมวลผลอีกครั้ง (Re-evaluate)")
+            Text(stringResource(R.string.btn_re_evaluate))
         }
     }
 }

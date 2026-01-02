@@ -14,7 +14,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.kdev.sookta.ui.theme.SooktaGreen
-
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 data class BottomNavItem(val label: String, val icon: ImageVector, val route: String)
 
@@ -23,9 +24,9 @@ fun MainScreen(rootNavController: NavController) {
     val mainNavController = rememberNavController()
 
     val navItems = listOf(
-        BottomNavItem("หน้าแรก", Icons.Default.Home, "home"),
-        BottomNavItem("ผลตรวจ", Icons.Default.History, "history"),
-        BottomNavItem("โปรไฟล์", Icons.Default.AccountCircle, "profile")
+        BottomNavItem(stringResource(R.string.nav_home), Icons.Default.Home, "home"),
+        BottomNavItem(stringResource(R.string.nav_history), Icons.Default.History, "history"),
+        BottomNavItem(stringResource(R.string.nav_profile), Icons.Default.AccountCircle, "profile")
     )
 
     Scaffold(

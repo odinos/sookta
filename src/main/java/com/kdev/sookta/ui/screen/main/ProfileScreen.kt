@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -33,6 +34,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.data.AppDatabase
 import java.io.File
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +52,7 @@ fun ProfileScreen(navController: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(bottom = paddingValues.calculateBottomPadding())
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -57,13 +60,13 @@ fun ProfileScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(280.dp)
+                    .height(220.dp)
             ) {
                 // พื้นหลังสีเขียวโค้ง
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .fillMaxHeight()
                         .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
                         .background(Color(0xFF5C9A81))
                 )
@@ -71,9 +74,9 @@ fun ProfileScreen(navController: NavController) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Top
                 ) {
-                    Spacer(Modifier.height(40.dp))
+                    Spacer(Modifier.height(24.dp))
 
                     // รูปโปรไฟล์
                     Box(
@@ -102,18 +105,18 @@ fun ProfileScreen(navController: NavController) {
                         }
                     }
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
                     // ชื่อผู้ใช้งาน
                     Text(
-                        text = userPref?.userName ?: "ผู้ใช้งานทั่วไป",
+                        text = userPref?.userName ?: stringResource(R.string.default_username),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF333333)
+                        color = Color.White
                     )
                 }
             }
-
+            Spacer(Modifier.height(16.dp))
             // --- 2. ส่วนข้อมูลสุขภาพ (Stats) ---
             Row(
                 modifier = Modifier
@@ -122,23 +125,23 @@ fun ProfileScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 StatCard(
-                    title = "อายุ",
+                    title = stringResource(R.string.stat_age),
                     value = userPref?.age ?: "-",
-                    unit = "ปี",
+                    unit = stringResource(R.string.unit_year),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(12.dp))
                 StatCard(
-                    title = "น้ำหนัก",
+                    title = stringResource(R.string.stat_weight),
                     value = userPref?.weight ?: "-",
-                    unit = "กก.",
+                    unit = stringResource(R.string.unit_kg),
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(Modifier.width(12.dp))
                 StatCard(
-                    title = "ส่วนสูง",
+                    title = stringResource(R.string.stat_height),
                     value = userPref?.height ?: "-",
-                    unit = "ซม.",
+                    unit = stringResource(R.string.unit_cm),
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -151,35 +154,35 @@ fun ProfileScreen(navController: NavController) {
                 // 1. จัดการโปรไฟล์ (แก้ไขข้อมูล)
                 ProfileMenuItem(
                     icon = Icons.Default.Edit,
-                    text = "จัดการโปรไฟล์ (แก้ไขข้อมูล)",
+                    text = stringResource(R.string.profile_edit),
                     onClick = { navController.navigate("setup") } // ไปหน้า Setup
                 )
 
                 // 2. เปลี่ยนภาษา
                 ProfileMenuItem(
                     icon = Icons.Default.Language,
-                    text = "เปลี่ยนภาษา",
+                    text = stringResource(R.string.menu_language),
                     onClick = { navController.navigate("language_selection") } // ไปหน้าเลือกภาษา
                 )
 
                 // 3. ข้อกำหนดและเงื่อนไข
                 ProfileMenuItem(
                     icon = Icons.Default.Description,
-                    text = "ข้อกำหนดและเงื่อนไข",
+                    text = stringResource(R.string.menu_terms),
                     onClick = { navController.navigate("terms") }
                 )
 
                 // 4. ความช่วยเหลือ และคำแนะนำการใช้งาน
                 ProfileMenuItem(
                     icon = Icons.AutoMirrored.Filled.HelpOutline,
-                    text = "ความช่วยเหลือ และคำแนะนำการใช้งาน",
+                    text = stringResource(R.string.menu_help),
                     onClick = { navController.navigate("help") }
                 )
 
                 // 5. ติดต่อเรา
                 ProfileMenuItem(
                     icon = Icons.Default.Call,
-                    text = "ติดต่อเรา",
+                    text = stringResource(R.string.menu_contact),
                     onClick = { navController.navigate("contact") }
                 )
 

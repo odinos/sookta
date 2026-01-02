@@ -25,6 +25,9 @@ import androidx.navigation.NavController
 import com.kdev.sookta.data.AppDatabase
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
+
 @Composable
 fun AvatarSelectionScreen(navController: NavController) {
     val context = LocalContext.current
@@ -92,16 +95,16 @@ fun AvatarSelectionScreen(navController: NavController) {
                     // ตรงนี้จำลองใส่ path ว่า "camera_capture" ไปก่อน
                     db.userPreferenceDao().updateAvatarAndFinish("camera_capture")
 
-                    // เสร็จสิ้น ไปหน้า Home และล้าง history เพื่อไม่ให้กด Back กลับมาได้
-                    navController.navigate("main") {
-                        popUpTo("splash") { inclusive = true }
+                    navController.navigate("setup") {
+                        // popUpTo อาจจะยังไม่ต้องล้างหมดก็ได้ หรือจะล้างแค่ avatar_selection ออก
+                        popUpTo("avatar_selection") { inclusive = true }
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
         ) {
-            Text("บันทึกและเริ่มใช้งาน", fontSize = 18.sp)
+            Text(stringResource(R.string.btn_save_and_start), fontSize = 18.sp)
         }
     }
 }

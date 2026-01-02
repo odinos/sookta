@@ -11,6 +11,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,7 +20,7 @@ fun TermsScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ข้อกำหนดและเงื่อนไข", color = Color.White) },
+                title = { Text(stringResource(R.string.terms_title), color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -30,7 +32,7 @@ fun TermsScreen(navController: NavController) {
         containerColor = Color(0xFFFDF8E1)
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-            Text("รายละเอียดข้อกำหนดและเงื่อนไข...", color = Color.Gray)
+            Text(stringResource(R.string.terms_content), color = Color.Gray)
         }
     }
 }

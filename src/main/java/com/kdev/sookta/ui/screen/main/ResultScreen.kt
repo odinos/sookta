@@ -8,7 +8,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 @Composable
 fun ResultScreen(navController: NavController) {
     Column(
@@ -16,14 +17,14 @@ fun ResultScreen(navController: NavController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Result Screen")
-        Text("จุดเสี่ยง: หลังล่าง, คะแนน: 9")
+        Text(stringResource(R.string.result_title))
+        Text("${stringResource(R.string.result_risk_point)}, ${stringResource(R.string.result_score)} 9")
         Spacer(Modifier.height(20.dp))
         Button(onClick = {
             // Go back to the home screen in the main flow
             navController.popBackStack("home", inclusive = false)
         }) {
-            Text("กลับสู่หน้าหลัก")
+            Text(stringResource(R.string.btn_back_home))
         }
     }
 }

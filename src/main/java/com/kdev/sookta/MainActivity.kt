@@ -28,7 +28,16 @@ import com.kdev.sookta.ui.screen.onboarding.LanguageSelectionScreen
 import com.kdev.sookta.ui.screen.onboarding.SplashScreen
 import com.kdev.sookta.ui.theme.SooktaTheme
 
+import android.content.Context
+import com.kdev.sookta.utils.LocaleHelper
+
 class MainActivity : ComponentActivity() {
+
+    // 1. เพิ่มฟังก์ชันนี้เพื่อดักเปลี่ยนภาษาตั้งแต่ระดับ Base Context
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleHelper.onAttach(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

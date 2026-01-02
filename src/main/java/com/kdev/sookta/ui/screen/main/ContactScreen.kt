@@ -11,14 +11,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
-
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ติดต่อเรา", color = Color.White) },
+                title = { Text(stringResource(R.string.contact_title), color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -30,7 +31,7 @@ fun ContactScreen(navController: NavController) {
         containerColor = Color(0xFFFDF8E1)
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-            Text("ข้อมูลการติดต่อทีมงาน Sookta...", color = Color.Gray)
+            Text(stringResource(R.string.contact_info), color = Color.Gray)
         }
     }
 }

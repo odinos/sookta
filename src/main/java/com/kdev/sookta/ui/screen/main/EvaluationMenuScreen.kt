@@ -15,19 +15,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvaluationMenuScreen(navController: NavController) {
 
     val activities = listOf(
-        "เก็บผลผลิตบนต้น",
-        "ขุดหลุมปลูก",
-        "คัดเมล็ด",
-        "ดันรถเข็น",
-        "แบกตะกร้ากาแฟ",
-        "พ่นยา",
-        "แบกถุงปุ๋ย"
+        R.string.job_harvest,
+        R.string.job_digging,
+        R.string.job_sorting,
+        R.string.job_cart,
+        R.string.job_basket,
+        R.string.job_spray,
+        R.string.job_fertilizer
     )
 
     Scaffold(
@@ -35,7 +37,7 @@ fun EvaluationMenuScreen(navController: NavController) {
             TopAppBar(
                 title = {
                     Text(
-                        "เลือกประเภทงาน",
+                        stringResource(R.string.eval_menu_title),
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -44,7 +46,7 @@ fun EvaluationMenuScreen(navController: NavController) {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "กลับ",
+                            contentDescription = stringResource(R.string.btn_back_desc),
                             tint = Color.White
                         )
                     }
@@ -66,7 +68,7 @@ fun EvaluationMenuScreen(navController: NavController) {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                "โปรดเลือกกิจกรรมที่ต้องการประเมิน",
+                stringResource(R.string.eval_select_desc),
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.Gray
             )
@@ -92,7 +94,7 @@ fun EvaluationMenuScreen(navController: NavController) {
 }
 
 @Composable
-fun ActivityCard(name: String, onClick: () -> Unit) {
+fun ActivityCard(name: Int, onClick: () -> Unit) {
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -108,7 +110,7 @@ fun ActivityCard(name: String, onClick: () -> Unit) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = name,
+                text = stringResource(name),
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp, // ปรับขนาดตัวอักษรให้ใหญ่ขึ้นนิดนึงให้อ่านง่าย
                 color = Color(0xFF2E7D32),

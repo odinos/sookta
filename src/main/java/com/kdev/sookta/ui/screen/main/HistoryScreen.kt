@@ -21,11 +21,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.kdev.sookta.R
 
 // Data Class จำลองข้อมูลประวัติ (ในอนาคตจะดึงจาก Room Database)
 data class HistoryItem(
     val id: String,
-    val activityName: String,
+    val activityNameRes: Int,
     val date: String,
     val riskScore: Int, // คะแนน 1-10
     val riskLevel: String // "Low", "Medium", "High"
@@ -35,10 +37,10 @@ data class HistoryItem(
 fun HistoryScreen(navController: NavController) {
     // ข้อมูลตัวอย่าง (Mock Data)
     val historyList = listOf(
-        HistoryItem("1", "งานยกของหนัก", "12 ม.ค. 67", 8, "High"),
-        HistoryItem("2", "งานหน้าคอมพิวเตอร์", "10 ม.ค. 67", 4, "Medium"),
-        HistoryItem("3", "งานเชื่อมโลหะ", "05 ม.ค. 67", 2, "Low"),
-        HistoryItem("4", "งานบนที่สูง", "28 ธ.ค. 66", 9, "High")
+        HistoryItem("1", R.string.job_basket, "12 ม.ค. 67", 8, "High"),
+        HistoryItem("2", R.string.job_harvest, "10 ม.ค. 67", 4, "Medium"),
+        HistoryItem("3", R.string.job_cart, "05 ม.ค. 67", 2, "Low"),
+        HistoryItem("4", R.string.job_sorting, "28 ธ.ค. 66", 9, "High")
     )
 
     Column(
@@ -63,13 +65,13 @@ fun HistoryScreen(navController: NavController) {
             ) {
                 Column {
                     Text(
-                        text = "ผลตรวจย้อนหลัง",
+                        text = stringResource(R.string.history_title),
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                     Text(
-                        text = "ประวัติการประเมินความเสี่ยงของคุณ",
+                        text = stringResource(R.string.history_subtitle),
                         fontSize = 14.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -105,9 +107,9 @@ fun HistoryScreen(navController: NavController) {
 fun HistoryCard(item: HistoryItem) {
     // กำหนดสีตามระดับความเสี่ยง
     val (statusColor, statusText) = when (item.riskLevel) {
-        "High" -> Color(0xFFFF5252) to "เสี่ยงสูง" // แดง
-        "Medium" -> Color(0xFFFFA726) to "ปานกลาง" // ส้ม
-        else -> Color(0xFF66BB6A) to "ปกติ" // เขียว
+        "High" -> Color(0xFFFF5252) to stringResource(R.string.risk_high) // แดง
+        "Medium" -> Color(0xFFFFA726) to stringResource(R.string.risk_medium) // ส้ม
+        else -> Color(0xFF66BB6A) to stringResource(R.string.risk_low) // เขียว
     }
 
     Card(
@@ -141,7 +143,7 @@ fun HistoryCard(item: HistoryItem) {
             // รายละเอียด
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.activityName,
+                    text = stringResource(item.activityNameRes),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color(0xFF333333),

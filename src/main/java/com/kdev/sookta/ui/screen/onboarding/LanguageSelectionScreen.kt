@@ -1,5 +1,7 @@
 package com.kdev.sookta.ui.screen.onboarding
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,6 +24,7 @@ import androidx.navigation.NavController
 import com.kdev.sookta.R
 import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.data.UserPreference
+import com.kdev.sookta.utils.LocaleHelper
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -28,17 +32,16 @@ import kotlinx.coroutines.launch
 fun LanguageSelectionScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // ใช้ remember เพื่อไม่ให้สร้าง DB ใหม่ทุกครั้งที่ recompose
     val db = remember { AppDatabase.getDatabase(context) }
 
-    // ตรวจสอบว่ามีหน้าก่อนหน้านี้ไหม? (ถ้ามี = มาจาก Profile, ถ้าไม่มี = มาจาก Splash/Userใหม่)
     val isEditMode = navController.previousBackStackEntry != null
 
     Scaffold(
         topBar = {
-            // แสดงปุ่ม Back เฉพาะตอนที่เข้ามาแก้ไข (Edit Mode)
             if (isEditMode) {
                 TopAppBar(
-                    title = { Text("เปลี่ยนภาษา", color = Color.White, fontWeight = FontWeight.Bold) },
+                    title = { Text(stringResource(R.string.change_language), color = Color.White, fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
@@ -48,7 +51,7 @@ fun LanguageSelectionScreen(navController: NavController) {
                 )
             }
         },
-        containerColor = Color(0xFFFDF8E1) // สีพื้นหลังครีม
+        containerColor = Color(0xFFFDF8E1)
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -58,60 +61,60 @@ fun LanguageSelectionScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // 1. Logo App (แทนที่ Text เดิม)
             Image(
                 painter = painterResource(id = R.drawable.sookta_logo),
                 contentDescription = "Sookta Logo",
                 modifier = Modifier
-                    .size(200.dp) // ปรับขนาดโลโก้
+                    .size(200.dp)
                     .padding(bottom = 16.dp),
                 contentScale = ContentScale.Fit
             )
 
             Text(
-                text = "ยินดีต้อนรับสู่",
+                text = stringResource(R.string.welcome_to),
                 fontSize = 20.sp,
                 color = Color.Gray
             )
 
             Text(
-                text = "SOOK-TA",
+                text = stringResource(R.string.app_name),
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF5C9A81) // สีเขียวธีม
+                color = Color(0xFF5C9A81)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "กรุณาเลือกภาษาเพื่อเริ่มต้นใช้งาน",
+                text = stringResource(R.string.select_lang_desc),
                 fontSize = 14.sp,
                 color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // 2. ตัวเลือกภาษาแบบ Card สวยงาม
+            // เลือกภาษาไทย
             LanguageOptionCard(
-                title = "ภาษาไทย",
-                subtitle = "Thai",
-                flagEmoji = "🇹🇭", // ใส่ Emoji ธงชาติเพิ่มความสวยงาม (หรือจะเอาออกก็ได้)
+                title = stringResource(R.string.lang_thai),
+                subtitle = "ภาษาไทย",
+                flagEmoji = "🇹🇭",
                 onClick = {
                     scope.launch {
-                        saveLanguageAndNavigate(db, "TH", navController, isEditMode)
+                        saveLanguageAndNavigate(db, "TH", navController, isEditMode, context)
                     }
                 }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // เลือกภาษาอังกฤษ
             LanguageOptionCard(
-                title = "English",
-                subtitle = "อังกฤษ",
+                title = stringResource(R.string.lang_eng),
+                subtitle = "English",
                 flagEmoji = "🇬🇧",
                 onClick = {
                     scope.launch {
-                        saveLanguageAndNavigate(db, "EN", navController, isEditMode)
+                        saveLanguageAndNavigate(db, "EN", navController, isEditMode, context)
                     }
                 }
             )
@@ -119,7 +122,6 @@ fun LanguageSelectionScreen(navController: NavController) {
     }
 }
 
-// Component การ์ดตัวเลือกภาษา
 @Composable
 fun LanguageOptionCard(
     title: String,
@@ -142,12 +144,8 @@ fun LanguageOptionCard(
                 .padding(horizontal = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // ส่วนธงชาติ (Emoji text)
             Text(text = flagEmoji, fontSize = 32.sp)
-
             Spacer(modifier = Modifier.width(20.dp))
-
-            // ส่วนข้อความ
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -161,35 +159,62 @@ fun LanguageOptionCard(
                     color = Color.Gray
                 )
             }
-
-            // Icon ลูกศรหรือเครื่องหมายถูก
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
-                tint = Color(0xFF5C9A81).copy(alpha = 0.3f), // สีจางๆ ตกแต่ง
+                tint = Color(0xFF5C9A81).copy(alpha = 0.3f),
                 modifier = Modifier.size(24.dp)
             )
         }
     }
 }
 
-// ฟังก์ชันบันทึกและเปลี่ยนหน้า (รองรับทั้ง User ใหม่ และ Edit Mode)
 suspend fun saveLanguageAndNavigate(
     db: AppDatabase,
-    lang: String,
+    langDB: String, // "TH" หรือ "EN" (สำหรับเก็บลง DB)
     navController: NavController,
-    isEditMode: Boolean
+    isEditMode: Boolean,
+    context: Context
 ) {
+    // แปลงเป็นรหัส locale สำหรับ LocaleHelper ("th" หรือ "en")
+    val localeCode = if (langDB.equals("TH", ignoreCase = true)) "th" else "en"
+
+    // 1. บันทึกลง SharedPreferences ทันที
+    LocaleHelper.setLanguage(context, localeCode)
+
     val dao = db.userPreferenceDao()
 
-    if (isEditMode) {
-        // กรณี: มาจากหน้า Profile -> แค่อัปเดตภาษาแล้วกลับไป
-        dao.updateLanguage(lang)
-        navController.popBackStack()
-    } else {
-        // กรณี: เริ่มต้นใช้งานครั้งแรก -> สร้างข้อมูลใหม่ แล้วไปหน้า Setup
-        // (Insert แบบ REPLACE จะล้างข้อมูลเก่า เหมาะสำหรับ User ใหม่)
-        dao.insertPreference(UserPreference(id = 1, language = lang))
-        navController.navigate("setup")
+    try {
+        if (isEditMode) {
+            // โหมดแก้ไข: อัปเดต DB แล้วรีสตาร์ท Activity เพื่อเปลี่ยนภาษา
+            dao.updateLanguage(langDB)
+            if (context is Activity) {
+                context.recreate()
+            }
+        } else {
+            // โหมดผู้ใช้ใหม่: ใช้ insertOrUpdate หรือ try-catch กันแอปเด้ง
+            // เนื่องจากเราไม่เห็นโค้ด DAO ผมเลยใช้ logic ง่ายๆ คือเช็คก่อนว่ามีไหม (ถ้า DAO ไม่มี insertOrUpdate)
+            // หรือวิธีที่ปลอดภัยที่สุดคือ try-catch การ insert ครับ
+            try {
+                dao.insertPreference(UserPreference(id = 1, language = langDB))
+            } catch (e: Exception) {
+                // ถ้า insert ไม่ได้ (เพราะมี id=1 อยู่แล้ว) ให้ update แทน
+                dao.updateLanguage(langDB)
+            }
+
+            // บังคับเปลี่ยน Locale ของ Context ปัจจุบันก่อนไปหน้าถัดไป
+            LocaleHelper.updateContextLocale(context, localeCode)
+
+            // ไปหน้าถัดไป
+            navController.navigate("avatar_selection") {
+                popUpTo("language_selection") { inclusive = true }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        // กรณีเกิด Error จริงๆ ก็ยังให้เปลี่ยนหน้าไปได้ เพื่อไม่ให้ user ติดอยู่หน้านี้
+        navController.navigate("avatar_selection") {
+            popUpTo("language_selection") { inclusive = true }
+        }
     }
 }
