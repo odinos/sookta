@@ -26,6 +26,7 @@ import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.data.UserPreference
 import com.kdev.sookta.utils.LocaleHelper
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -169,52 +170,59 @@ fun LanguageOptionCard(
     }
 }
 
+// --- ส่วนที่แก้ไขสำคัญ ---
+@Suppress("DEPRECATION") // จำเป็นต้องใช้ updateConfiguration เพื่อให้เปลี่ยนภาษาทันทีโดยไม่ Recreate ในรอบแรก
 suspend fun saveLanguageAndNavigate(
     db: AppDatabase,
-    langDB: String, // "TH" หรือ "EN" (สำหรับเก็บลง DB)
+    langDB: String, // "TH" หรือ "EN"
     navController: NavController,
     isEditMode: Boolean,
     context: Context
 ) {
-    // แปลงเป็นรหัส locale สำหรับ LocaleHelper ("th" หรือ "en")
+    // 1. แปลงรหัสภาษา
     val localeCode = if (langDB.equals("TH", ignoreCase = true)) "th" else "en"
 
-    // 1. บันทึกลง SharedPreferences ทันที
+    // 2. บันทึกลง SharedPreferences
     LocaleHelper.setLanguage(context, localeCode)
+
+    // 3. ตั้งค่า Locale ให้ JVM
+    val locale = Locale.forLanguageTag(localeCode)
+    Locale.setDefault(locale)
 
     val dao = db.userPreferenceDao()
 
     try {
         if (isEditMode) {
-            // โหมดแก้ไข: อัปเดต DB แล้วรีสตาร์ท Activity เพื่อเปลี่ยนภาษา
+            // --- กรณีแก้ไข (มาจากหน้า Profile) ---
             dao.updateLanguage(langDB)
+
+            // ใช้ recreate() เพื่อรีโหลดแอพใหม่ให้ภาษาเปลี่ยนทุกหน้า
             if (context is Activity) {
                 context.recreate()
             }
         } else {
-            // โหมดผู้ใช้ใหม่: ใช้ insertOrUpdate หรือ try-catch กันแอปเด้ง
-            // เนื่องจากเราไม่เห็นโค้ด DAO ผมเลยใช้ logic ง่ายๆ คือเช็คก่อนว่ามีไหม (ถ้า DAO ไม่มี insertOrUpdate)
-            // หรือวิธีที่ปลอดภัยที่สุดคือ try-catch การ insert ครับ
+            // --- กรณีติดตั้งใหม่ (First Run) ---
             try {
                 dao.insertPreference(UserPreference(id = 1, language = langDB))
             } catch (e: Exception) {
-                // ถ้า insert ไม่ได้ (เพราะมี id=1 อยู่แล้ว) ให้ update แทน
                 dao.updateLanguage(langDB)
             }
 
-            // บังคับเปลี่ยน Locale ของ Context ปัจจุบันก่อนไปหน้าถัดไป
-            LocaleHelper.updateContextLocale(context, localeCode)
+            // [FIX] บังคับอัปเดต Configuration ทันที เพื่อให้หน้าถัดไป (Setup) เป็นภาษาใหม่
+            // โดยไม่ต้องสั่ง recreate() ซึ่งจะทำให้หลุดไปหน้า Splash
+            val resources = context.resources
+            val configuration = resources.configuration
+            configuration.setLocale(locale)
+            resources.updateConfiguration(configuration, resources.displayMetrics)
 
-            // ไปหน้าถัดไป
-            navController.navigate("avatar_selection") {
+            // [FIX] สั่ง Navigate ไปหน้า Setup โดยตรง
+            navController.navigate("setup") {
+                // ลบหน้าเลือกภาษาออกจาก Stack เพื่อไม่ให้กด Back กลับมาได้
                 popUpTo("language_selection") { inclusive = true }
             }
         }
     } catch (e: Exception) {
         e.printStackTrace()
-        // กรณีเกิด Error จริงๆ ก็ยังให้เปลี่ยนหน้าไปได้ เพื่อไม่ให้ user ติดอยู่หน้านี้
-        navController.navigate("avatar_selection") {
-            popUpTo("language_selection") { inclusive = true }
-        }
+        navController.popBackStack()
     }
 }

@@ -125,6 +125,7 @@
 
     <string name="setup_page_title">Personal Info</string>
     <string name="setup_header_edit">Edit Your Profile</string>
+    <string name="setup_header_add">Add Your Profile</string>
     <string name="label_name">Nickname</string>
     <string name="label_age">Age (Years)</string>
     <string name="label_gender">Gender</string>
@@ -133,7 +134,7 @@
     <string name="label_weight_kg">Weight (kg)</string>
     <string name="label_height_cm">Height (cm)</string>
     <string name="btn_save_data">Save Data</string>
-
+    <string name="save_data_completed">Save Completed</string>
     <string name="default_username">Guest User</string>
     <string name="stat_age">Age</string>
     <string name="stat_weight">Weight</string>
@@ -150,4 +151,12 @@
 
     <string name="suggestion_title">Risk Reduction Suggestions</string>
     <string name="suggestion_desc">Please select measures to improve:</string>
+
+    <string name="avatar_title">Select Profile Picture</string>
+    <string name="avatar_title_edit">Change Profile Picture</string>
+    <string name="avatar_subtitle">Choose an avatar or take a photo</string>
+    <string name="avatar_take_photo">Take Photo</string>
+    <string name="avatar_gallery">Gallery</string>
+    <string name="avatar_confirm">Confirm Profile Picture</string>
+    <string name="avatar_select_hint">Select from the list below</string>
 </resources>

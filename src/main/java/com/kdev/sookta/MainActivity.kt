@@ -29,6 +29,7 @@ import com.kdev.sookta.ui.screen.onboarding.SplashScreen
 import com.kdev.sookta.ui.theme.SooktaTheme
 
 import android.content.Context
+import com.kdev.sookta.ui.screen.main.HistoryScreen
 import com.kdev.sookta.utils.LocaleHelper
 
 class MainActivity : ComponentActivity() {
@@ -79,17 +80,16 @@ fun AppNavigation() {
         }
         composable("initial_risk/{activityName}/{score}") { backStackEntry ->
             val activityName = backStackEntry.arguments?.getString("activityName") ?: "-"
-            val score = backStackEntry.arguments?.getString("score")?.toIntOrNull() ?: 0
-            InitialRiskScreen(navController, activityName, score)
+            val score = backStackEntry.arguments?.getString("score")
+            InitialRiskScreen(navController, activityNameArg = activityName, initialScoreArg = score)
         }
-        composable("final_result/{oldScore}/{newScore}") { backStackEntry ->
-            val oldScore = backStackEntry.arguments?.getString("oldScore")?.toIntOrNull() ?: 0
-            val newScore = backStackEntry.arguments?.getString("newScore")?.toIntOrNull() ?: 0
-            FinalResultScreen(navController, oldScore, newScore)
+        composable("final_result_screen") {
+            FinalResultScreen(navController)
         }
 
         composable("terms") { TermsScreen(navController) }
         composable("help") { HelpScreen(navController) }
         composable("contact") { ContactScreen(navController) }
+        composable("history") { HistoryScreen(navController) }
     }
 }

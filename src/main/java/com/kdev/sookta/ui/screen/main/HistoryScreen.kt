@@ -10,12 +10,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,25 +25,27 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 import com.kdev.sookta.R
-
-// Data Class จำลองข้อมูลประวัติ (ในอนาคตจะดึงจาก Room Database)
-data class HistoryItem(
-    val id: String,
-    val activityNameRes: Int,
-    val date: String,
-    val riskScore: Int, // คะแนน 1-10
-    val riskLevel: String // "Low", "Medium", "High"
-)
+import com.kdev.sookta.data.AppDatabase
+import com.kdev.sookta.data.EvaluationEntity
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun HistoryScreen(navController: NavController) {
-    // ข้อมูลตัวอย่าง (Mock Data)
-    val historyList = listOf(
-        HistoryItem("1", R.string.job_basket, "12 ม.ค. 67", 8, "High"),
-        HistoryItem("2", R.string.job_harvest, "10 ม.ค. 67", 4, "Medium"),
-        HistoryItem("3", R.string.job_cart, "05 ม.ค. 67", 2, "Low"),
-        HistoryItem("4", R.string.job_sorting, "28 ธ.ค. 66", 9, "High")
-    )
+    val context = LocalContext.current
+
+    // State สำหรับเก็บรายการประวัติจาก Database
+    var historyList by remember { mutableStateOf(emptyList<EvaluationEntity>()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    // ดึงข้อมูลจาก Database เมื่อหน้าจอถูกโหลด
+    LaunchedEffect(Unit) {
+        val db = AppDatabase.getDatabase(context)
+        // ดึงข้อมูลเรียงจากล่าสุดไปเก่าสุด (ตาม Query ใน DAO)
+        historyList = db.evaluationDao().getAllHistory()
+        isLoading = false
+    }
 
     Column(
         modifier = Modifier
@@ -71,7 +75,7 @@ fun HistoryScreen(navController: NavController) {
                         color = Color.White
                     )
                     Text(
-                        text = stringResource(R.string.history_subtitle),
+                        text = stringResource(R.string.history_subtitle), // "ประวัติการประเมินย้อนหลัง"
                         fontSize = 14.sp,
                         color = Color.White.copy(alpha = 0.8f)
                     )
@@ -79,7 +83,7 @@ fun HistoryScreen(navController: NavController) {
 
                 // ปุ่มค้นหา (Optional)
                 IconButton(
-                    onClick = { print("search") },
+                    onClick = { /* TODO: Implement Search */ },
                     modifier = Modifier.background(Color.White.copy(alpha = 0.2f), CircleShape)
                 ) {
                     Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)
@@ -90,26 +94,48 @@ fun HistoryScreen(navController: NavController) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- 2. รายการประวัติ (List) ---
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(historyList) { item ->
-                HistoryCard(item)
+        if (isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color(0xFF5C9A81))
             }
-            // พื้นที่ว่างด้านล่างเผื่อ BottomBar
-            item { Spacer(modifier = Modifier.height(80.dp)) }
+        } else if (historyList.isEmpty()) {
+            // กรณีไม่มีข้อมูล
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Default.History, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(64.dp))
+                    Spacer(Modifier.height(16.dp))
+                    Text("ยังไม่มีประวัติการประเมิน", color = Color.Gray)
+                }
+            }
+        } else {
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(historyList) { item ->
+                    HistoryCard(item)
+                }
+                // พื้นที่ว่างด้านล่างเผื่อ BottomBar
+                item { Spacer(modifier = Modifier.height(80.dp)) }
+            }
         }
     }
 }
 
 @Composable
-fun HistoryCard(item: HistoryItem) {
-    // กำหนดสีตามระดับความเสี่ยง
-    val (statusColor, statusText) = when (item.riskLevel) {
-        "High" -> Color(0xFFFF5252) to stringResource(R.string.risk_high) // แดง
-        "Medium" -> Color(0xFFFFA726) to stringResource(R.string.risk_medium) // ส้ม
-        else -> Color(0xFF66BB6A) to stringResource(R.string.risk_low) // เขียว
+fun HistoryCard(item: EvaluationEntity) {
+    // แปลงวันที่ Timestamp -> String ภาษาไทย
+    val formattedDate = remember(item.dateTimestamp) {
+        val sdf = SimpleDateFormat("dd MMM yy", Locale("th"))
+        sdf.format(Date(item.dateTimestamp))
+    }
+
+    // กำหนดสีตามระดับความเสี่ยง (จากค่า riskAfter ที่บันทึกล่าสุด)
+    // Map ค่า Enum String กลับเป็น Resource และ Color
+    val (statusColor, statusText) = when (item.riskAfter) {
+        "HIGH" -> Color(0xFFFF5252) to stringResource(R.string.risk_high) // แดง
+        "MEDIUM" -> Color(0xFFFFA726) to stringResource(R.string.risk_medium) // ส้ม
+        else -> Color(0xFF66BB6A) to stringResource(R.string.risk_low) // เขียว (LOW)
     }
 
     Card(
@@ -143,7 +169,7 @@ fun HistoryCard(item: HistoryItem) {
             // รายละเอียด
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(item.activityNameRes),
+                    text = item.activityName, // ใช้ชื่อจริงที่บันทึกไว้
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color(0xFF333333),
@@ -151,13 +177,24 @@ fun HistoryCard(item: HistoryItem) {
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = item.date,
+                    text = formattedDate,
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
+
+                // (Optional) แสดง improvement ถ้ามีการลดลง
+                if (item.scoreBefore > item.scoreAfter) {
+                    val improvement = ((item.scoreBefore - item.scoreAfter) / item.scoreBefore * 100).toInt()
+                    Text(
+                        text = "ความเสี่ยงลดลง $improvement%",
+                        fontSize = 10.sp,
+                        color = Color(0xFF2E7D32), // สีเขียวเข้ม
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
-            // Badge สถานะความเสี่ยง
+            // Badge สถานะความเสี่ยง (ใช้ค่า After คือผลลัพธ์หลังแก้ไข)
             Column(horizontalAlignment = Alignment.End) {
                 Box(
                     modifier = Modifier
@@ -173,8 +210,10 @@ fun HistoryCard(item: HistoryItem) {
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
+
+                // แสดงคะแนน (ทศนิยม 2 ตำแหน่ง)
                 Text(
-                    text = "${item.riskScore}/10",
+                    text = String.format("%.2f", item.scoreAfter),
                     fontSize = 12.sp,
                     color = Color.Gray
                 )

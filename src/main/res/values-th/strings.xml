@@ -127,6 +127,7 @@
 
     <string name="setup_page_title">ข้อมูลส่วนตัว</string>
     <string name="setup_header_edit">แก้ไขข้อมูลของคุณ</string>
+    <string name="setup_header_add">เพิ่มข้อมูลของคุณ</string>
     <string name="label_name">ชื่อเล่น (Name)</string>
     <string name="label_age">อายุ (ปี)</string>
     <string name="label_gender">เพศ</string>
@@ -135,7 +136,7 @@
     <string name="label_weight_kg">น้ำหนัก (กก.)</string>
     <string name="label_height_cm">ส่วนสูง (ซม.)</string>
     <string name="btn_save_data">บันทึกข้อมูล</string>
-
+    <string name="save_data_completed">บันทึกข้อมูลเรียบร้อย</string>
     <string name="default_username">ผู้ใช้งานทั่วไป</string>
     <string name="stat_age">อายุ</string>
     <string name="stat_weight">น้ำหนัก</string>
@@ -152,4 +153,12 @@
 
     <string name="suggestion_title">คำแนะนำเพื่อลดความเสี่ยง</string>
     <string name="suggestion_desc">กรุณาเลือกมาตรการที่คุณจะนำไปปรับปรุง:</string>
+
+    <string name="avatar_title">เลือกรูปโปรไฟล์</string>
+    <string name="avatar_title_edit">เปลี่ยนรูปโปรไฟล์</string>
+    <string name="avatar_subtitle">เลือกรูปแทนตัว หรือถ่ายภาพของคุณ</string>
+    <string name="avatar_take_photo">ถ่ายภาพ</string>
+    <string name="avatar_gallery">อัลบั้ม</string>
+    <string name="avatar_confirm">ยืนยันรูปโปรไฟล์</string>
+    <string name="avatar_select_hint">เลือกจากรายการด้านล่าง</string>
 </resources>

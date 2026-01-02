@@ -1,10 +1,10 @@
 package com.kdev.sookta.utils
 
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.res.Configuration
 import java.util.Locale
+import androidx.core.content.edit
 
 object LocaleHelper {
     private const val PREFS_NAME = "sookta_prefs"
@@ -19,7 +19,7 @@ object LocaleHelper {
     // บันทึกภาษาใหม่
     fun setLanguage(context: Context, language: String) {
         val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_LANG, language).apply()
+        prefs.edit { putString(KEY_LANG, language) }
     }
 
     // ฟังก์ชันสำคัญ! ใช้ห่อ Context ด้วยภาษาใหม่
@@ -29,7 +29,7 @@ object LocaleHelper {
     }
 
     fun updateContextLocale(context: Context, language: String): Context {
-        val locale = Locale(language)
+        val locale = Locale.forLanguageTag(language)
         Locale.setDefault(locale)
 
         val configuration = Configuration(context.resources.configuration)

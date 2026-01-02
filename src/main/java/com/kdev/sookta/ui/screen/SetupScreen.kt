@@ -33,6 +33,10 @@ fun SetupScreen(navController: NavController) {
     // ดึงข้อมูลเดิมจาก Database (ถ้ามี)
     val userPref by db.userPreferenceDao().getPreference().collectAsState(initial = null)
 
+    // --- ตรวจสอบสถานะว่าเป็นการ "แก้ไข" หรือ "ลงทะเบียนใหม่" ---
+    // ถ้า isSetupCompleted เป็น true แปลว่าเคยทำรายการเสร็จแล้ว = กำลัง Edit
+    val isEditMode = remember(userPref) { userPref?.isSetupCompleted == true }
+
     // State สำหรับเก็บข้อมูลในฟอร์ม
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
@@ -58,9 +62,12 @@ fun SetupScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.setup_page_title), color = Color.White) },
+                title = { Text(
+                    text = if (isEditMode) stringResource(R.string.setup_header_edit) // "แก้ไขข้อมูล"
+                    else stringResource(R.string.setup_page_title), // "กรอกข้อมูลส่วนตัว"
+                    color = Color.White
+                ) },
                 navigationIcon = {
-                    // ปุ่ม Back: กดแล้วย้อนกลับไปหน้าก่อนหน้า (Profile)
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.btn_back_desc), tint = Color.White)
                     }
@@ -79,7 +86,7 @@ fun SetupScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = stringResource(R.string.setup_header_edit),
+                text = if (isEditMode) stringResource(R.string.setup_header_edit) else stringResource(R.string.setup_header_add),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF5C9A81),
@@ -122,15 +129,24 @@ fun SetupScreen(navController: NavController) {
                             height = height
                         )
 
-                        // บันทึกเสร็จแล้ว ถอยกลับไปหน้า Profile
-                        navController.popBackStack()
+                        if (isEditMode) {
+                            // กรณี Edit: บันทึกเสร็จแล้วกลับไปหน้า Profile
+                            navController.popBackStack()
+                        } else {
+                            // กรณี Setup ใหม่: ไปหน้าเลือกรูปต่อ
+                            navController.navigate("avatar_selection")
+                        }
                     }
                 },
                 enabled = name.isNotEmpty() && age.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
             ) {
-                Text(stringResource(R.string.btn_save_data), fontSize = 18.sp)
+                Text(
+                    text = if (isEditMode) stringResource(R.string.btn_save_data) // "บันทึก"
+                    else stringResource(R.string.btn_next), // "ถัดไป"
+                    fontSize = 18.sp
+                )
             }
         }
     }

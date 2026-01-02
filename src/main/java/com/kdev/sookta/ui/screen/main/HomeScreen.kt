@@ -144,7 +144,7 @@ fun HomeScreen(navController: NavController) {
                         title = stringResource(R.string.menu_exercise),
                         icon = Icons.Default.AccessibilityNew,
                         color = Color(0xFFE1F5FE),
-                        onClick = { /* Navigate to Exercise */ }
+                        onClick = { throw RuntimeException("Test Crash: Press Exercises") }
                     )
                 }
                 item {
@@ -152,7 +152,9 @@ fun HomeScreen(navController: NavController) {
                         title = stringResource(R.string.menu_knowledge),
                         icon = Icons.AutoMirrored.Filled.MenuBook,
                         color = Color(0xFFFFF3E0),
-                        onClick = { /* Navigate to Knowledge */ }
+                        onClick = {
+                            throw RuntimeException("Test Crash: Press General Knowledge")
+                        }
                     )
                 }
 

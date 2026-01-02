@@ -28,13 +28,20 @@ fun SplashScreen(navController: NavController) {
     LaunchedEffect(userPref) {
         delay(2000L) // โชว์โลโก้อย่างน้อย 2 วิ
 
-        if (userPref != null && userPref!!.isSetupCompleted) {
-            // ถ้าเคยบันทึกแล้ว ไปหน้า Main เลย
+        // ตรวจสอบสถานะเพื่อไปหน้าถัดไป
+        if (userPref?.isSetupCompleted == true) {
+            // 1. ถ้าลงทะเบียนเสร็จแล้ว -> ไปหน้าหลัก
+
             navController.navigate("main") {
+                popUpTo("splash") { inclusive = true } // ลบ Splash ออกจาก Stack
+            }
+        } else if (userPref?.language != null) {
+            // 2. ถ้าเลือกภาษาแล้ว แต่ยัง Setup ไม่เสร็จ (กรณี Recreate หรือปิดแอพระหว่างทาง) -> ไปหน้า Setup
+            navController.navigate("setup") {
                 popUpTo("splash") { inclusive = true }
             }
         } else {
-            // ถ้ายังไม่เคย หรือ Database ว่างเปล่า ไปหน้าเริ่ม (Language หรือ Setup)
+            // 3. ถ้ายังไม่มีข้อมูลอะไรเลย -> ไปหน้าเลือกภาษา
             navController.navigate("language_selection") {
                 popUpTo("splash") { inclusive = true }
             }
