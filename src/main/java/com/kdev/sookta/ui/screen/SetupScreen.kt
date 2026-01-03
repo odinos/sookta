@@ -36,7 +36,7 @@ fun SetupScreen(navController: NavController) {
     // --- ตรวจสอบสถานะว่าเป็นการ "แก้ไข" หรือ "ลงทะเบียนใหม่" ---
     // ถ้า isSetupCompleted เป็น true แปลว่าเคยทำรายการเสร็จแล้ว = กำลัง Edit
     val isEditMode = remember(userPref) { userPref?.isSetupCompleted == true }
-
+    var income by remember { mutableStateOf("") }
     // State สำหรับเก็บข้อมูลในฟอร์ม
     var name by remember { mutableStateOf("") }
     var age by remember { mutableStateOf("") }
@@ -55,6 +55,7 @@ fun SetupScreen(navController: NavController) {
             gender = userPref?.gender ?: "Male"
             weight = userPref?.weight ?: ""
             height = userPref?.height ?: ""
+            income = userPref?.incomePerYear ?: ""
             isDataLoaded = true // ล็อคไว้ ไม่ให้โหลดซ้ำ
         }
     }
@@ -113,7 +114,21 @@ fun SetupScreen(navController: NavController) {
             SooktaTextField(value = weight, onChange = { weight = it }, label = stringResource(R.string.label_weight_kg), isNumber = true)
             Spacer(Modifier.height(12.dp))
             SooktaTextField(value = height, onChange = { height = it }, label = stringResource(R.string.label_height_cm), isNumber = true)
+            Spacer(Modifier.height(12.dp))
 
+            // [เพิ่ม] ช่องกรอกรายได้
+            SooktaTextField(
+                value = income,
+                onChange = { income = it },
+                label = "รายได้เฉลี่ยต่อปี (บาท)", // หรือใช้ stringResource(R.string.label_income)
+                isNumber = true
+            )
+            Text(
+                text = "* ใช้สำหรับการประเมินความสูญเสียทางเศรษฐกิจ",
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+            )
             Spacer(Modifier.height(40.dp))
 
             // ปุ่มบันทึก
@@ -126,7 +141,8 @@ fun SetupScreen(navController: NavController) {
                             age = age,
                             gender = gender,
                             weight = weight,
-                            height = height
+                            height = height,
+                            income = income
                         )
 
                         if (isEditMode) {

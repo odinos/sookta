@@ -1,16 +1,24 @@
 package com.kdev.sookta.ui.screen.main
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -18,21 +26,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.R
+import com.kdev.sookta.model.BodyPart
 import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.JobType
 import com.kdev.sookta.model.RebaInputData
+import com.kdev.sookta.model.RiskLevel
 import com.kdev.sookta.utils.ErgoCalculatorHelper
 
 @Composable
 fun InitialRiskScreen(navController: NavController, activityNameArg: String, scoreArg: Int) {
-    // 1. รับข้อมูลจาก SavedStateHandle (ข้อมูล Object ที่ส่งมา)
+    // 1. รับข้อมูล
     val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
     val initialResult = savedStateHandle?.get<ErgoResult>("riskResult")
-    // รับได้ทั้ง ErgoInputData (Lifting/Push) และ RebaInputData (REBA)
     val inputDataRaw = savedStateHandle?.get<Any>("inputData")
 
-    // Fallback กรณีข้อมูลไม่มา
     if (initialResult == null || inputDataRaw == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("ไม่พบข้อมูลการประเมิน กรุณาลองใหม่อีกครั้ง", color = Color.Red)
@@ -42,132 +50,198 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
 
     val displayActivityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
 
-    // 2. State สำหรับจำลองการแก้ไข (Simulation)
-    // ตรวจสอบชนิดข้อมูลและ Cast ให้ถูกต้อง
+    // 2. State Simulation
     var solutionInputIso by remember { mutableStateOf(if (inputDataRaw is ErgoInputData) inputDataRaw else null) }
     var solutionInputReba by remember { mutableStateOf(if (inputDataRaw is RebaInputData) inputDataRaw else null) }
-
     val jobType = solutionInputIso?.jobType ?: JobType.REBA
 
-    // คำนวณความเสี่ยงใหม่ Real-time
+    val selectedSuggestions = remember { mutableStateListOf<String>() }
+
     val finalResult = remember(solutionInputIso, solutionInputReba) {
         if (solutionInputIso != null) {
-            // ISO 11228 Case: ต้องเช็คว่าเป็นงานยก หรือ งานเข็น แล้วเรียกฟังก์ชันให้ถูก
             if (solutionInputIso!!.jobType == JobType.LIFTING) {
                 ErgoCalculatorHelper.calculateLiftingRisk(solutionInputIso!!)
             } else {
                 ErgoCalculatorHelper.calculatePushPullRisk(solutionInputIso!!)
             }
         } else if (solutionInputReba != null) {
-            // REBA Case
             ErgoCalculatorHelper.calculateRebaRisk(solutionInputReba!!)
         } else {
-            initialResult // Fallback
+            initialResult
         }
+    }
+
+    val contextSuggestions = remember(initialResult, activityNameArg) {
+        val baseSuggestions = initialResult.suggestionList.ifEmpty { listOf(initialResult.suggestion) }
+
+        // ถ้าเป็นงานเฉพาะทาง ให้เพิ่มคำแนะนำพิเศษ (Hardcode เสริมเข้าไป)
+        val extraSuggestions = mutableListOf<String>()
+        if (activityNameArg.contains("พ่นยา") || activityNameArg.contains("Pesticide")) {
+            extraSuggestions.add("ปรับสายสะพายเครื่องพ่นยาให้กระชับ")
+            extraSuggestions.add("สลับข้างสะพายถังเพื่อลดการกดทับไหล่เดียว")
+        } else if (activityNameArg.contains("ตัดแต่ง") || activityNameArg.contains("Pruning")) {
+            extraSuggestions.add("ใช้บันไดที่มั่นคงแทนการเอื้อมสุดแขน")
+            extraSuggestions.add("ใช้กรรไกรตัดกิ่งด้ามยาว")
+        } else if (activityNameArg.contains("ใส่ปุ๋ย") || activityNameArg.contains("Fertilizing")) {
+            extraSuggestions.add("ใช้รถเข็นบรรทุกกระสอบปุ๋ยแทนการแบก")
+        }
+
+        // รวมคำแนะนำเดิม + คำแนะนำเสริม (ไม่ให้ซ้ำ)
+        (baseSuggestions + extraSuggestions).distinct()
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(Color(0xFFF9F9F9))
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(stringResource(R.string.initial_risk_title), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
         Text("กิจกรรม: $displayActivityName", color = Color.Gray, fontSize = 16.sp, modifier = Modifier.padding(top = 4.dp))
-
         Spacer(Modifier.height(24.dp))
 
-        // --- ส่วนแสดงผลความเสี่ยงปัจจุบัน (Before) ---
-        Text("ผลการประเมินปัจจุบัน (Before)", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        // --- ส่วนที่ 1: คะแนน และ Body Map ---
+        Text("ผลการประเมินความเสี่ยง", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF333333))
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween, // ปรับระยะห่าง
+            verticalAlignment = Alignment.Top
+        ) {
+            // ซ้าย: คะแนนความเสี่ยง
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                RiskScoreCircle(result = initialResult)
+                Spacer(Modifier.height(12.dp))
+                if (initialResult.economicLoss > 0) {
+                    Text("อาจสูญเสียรายได้", fontSize = 12.sp, color = Color.Gray)
+                    Text("${initialResult.economicLoss} บ./ปี", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD32F2F))
+                }
+            }
+
+            // ขวา: Body Map + รายชื่ออวัยวะ
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("ตำแหน่งที่เสี่ยง", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(8.dp))
+
+                // รูป Body Map
+                BodyMapVisualization(bodyRisks = initialResult.bodyPartRisks)
+
+                Spacer(Modifier.height(12.dp))
+
+                // [NEW] รายการระบุชื่ออวัยวะ (Text Legend)
+                val riskyParts = initialResult.bodyPartRisks.filter { it.value != RiskLevel.LOW }
+                if (riskyParts.isNotEmpty()) {
+                    riskyParts.forEach { (part, level) ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        ) {
+                            // จุดสีเล็กๆ หน้าชื่อ
+                            Box(
+                                Modifier
+                                    .size(10.dp)
+                                    .background(Color(level.colorHex), CircleShape))
+                            Spacer(Modifier.width(6.dp))
+                            // ชื่ออวัยวะภาษาไทย และระดับความเสี่ยง
+                            Text(
+                                text = "${getBodyPartNameTH(part)} (${level.label})",
+                                fontSize = 11.sp,
+                                color = Color.DarkGray
+                            )
+                        }
+                    }
+                } else {
+                    Text("ไม่มีจุดเสี่ยงรุนแรง", fontSize = 12.sp, color = Color.Gray)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        Spacer(Modifier.height(24.dp))
+
+        // --- ส่วนที่ 2: Checklist คำแนะนำ ---
+        Text(
+            "แนวทางปรับปรุง (เลือกสิ่งที่ทำได้)",
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = Color(0xFF1565C0),
+            modifier = Modifier.align(Alignment.Start)
+        )
+        Text(
+            "เลือกหัวข้อด้านล่างเพื่อยืนยันว่าจะนำไปปรับปรุง",
+            fontSize = 12.sp,
+            color = Color.Gray,
+            modifier = Modifier.align(Alignment.Start)
+        )
         Spacer(Modifier.height(12.dp))
 
-        RiskScoreCircle(result = initialResult, jobType = jobType)
-
-        // คำแนะนำเบื้องต้น
-        Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFEBEE)), // สีแดงอ่อนแจ้งเตือน
-            modifier = Modifier.padding(top = 16.dp).fillMaxWidth()
-        ) {
-            Text(
-                text = "ข้อเสนอแนะ: ${initialResult.suggestion}",
-                color = Color(0xFFC62828),
-                fontSize = 14.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(16.dp).fillMaxWidth()
-            )
+        contextSuggestions.forEach { suggestion ->
+            val isSelected = selectedSuggestions.contains(suggestion)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFFE8F5E9) else Color.White),
+                elevation = CardDefaults.cardElevation(2.dp),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        if (isSelected) selectedSuggestions.remove(suggestion) else selectedSuggestions.add(suggestion)
+                    }
+            ) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { checked -> if (checked) selectedSuggestions.add(suggestion) else selectedSuggestions.remove(suggestion) },
+                        colors = CheckboxDefaults.colors(checkedColor = Color(0xFF2E7D32))
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = suggestion, fontSize = 14.sp, color = if (isSelected) Color(0xFF2E7D32) else Color.DarkGray, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                }
+            }
         }
 
         Spacer(Modifier.height(24.dp))
 
-        // --- ส่วนจำลองการปรับปรุง (Solution Simulation) ---
+        // --- ส่วนที่ 3: Simulation ---
         Card(
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD)), // สีฟ้าอ่อน
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("จำลองการปรับปรุง (Solution)", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color(0xFF1565C0))
-                Text("ลองปรับลดค่าต่างๆ เพื่อดูผลลัพธ์ใหม่", fontSize = 13.sp, color = Color.Gray)
-
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Info, null, tint = Color(0xFFE65100))
+                    Spacer(Modifier.width(8.dp))
+                    Text("ลองปรับค่าคำนวณ (Simulation)", fontWeight = FontWeight.Bold, color = Color(0xFFE65100))
+                }
                 Spacer(Modifier.height(16.dp))
 
                 if (jobType == JobType.LIFTING && solutionInputIso != null) {
-                    // --- Sliders: Lifting ---
-                    SolutionSlider("ลดน้ำหนักวัตถุ (kg)", solutionInputIso!!.loadWeight.toFloat(), 0f..solutionInputIso!!.loadWeight.toFloat()) {
-                        solutionInputIso = solutionInputIso!!.copy(loadWeight = it.toDouble())
-                    }
-                    SolutionSlider("เพิ่มความสูงจุดยก (V) cm", solutionInputIso!!.verticalHeight.toFloat(), solutionInputIso!!.verticalHeight.toFloat()..150f) { // ยิ่งสูง(ใกล้เอว)ยิ่งดีในบาง case หรือปรับให้เข้าใกล้ 75
-                        // Logic: ปรับให้เข้าใกล้ 75 (Standard) หรือ user ปรับเอง
-                        solutionInputIso = solutionInputIso!!.copy(verticalHeight = it.toDouble())
-                    }
-                    SolutionSlider("ลดความถี่ (ครั้ง/นาที)", solutionInputIso!!.liftFrequency.toFloat(), 0.1f..solutionInputIso!!.liftFrequency.toFloat()) {
-                        solutionInputIso = solutionInputIso!!.copy(liftFrequency = it.toDouble())
-                    }
-
+                    SolutionSlider("น้ำหนักวัตถุ (kg)", solutionInputIso!!.loadWeight.toFloat(), 0f..solutionInputIso!!.loadWeight.toFloat()) { solutionInputIso = solutionInputIso!!.copy(loadWeight = it.toDouble()) }
+                    SolutionSlider("ความสูงจุดยก (V)", solutionInputIso!!.verticalHeight.toFloat(), 0f..180f) { solutionInputIso = solutionInputIso!!.copy(verticalHeight = it.toDouble()) }
                 } else if (jobType == JobType.PUSH_PULL && solutionInputIso != null) {
-                    // --- Sliders: Push/Pull ---
-                    SolutionSlider("ลดแรงเริ่มต้น (Initial N)", solutionInputIso!!.initialForce.toFloat(), 0f..solutionInputIso!!.initialForce.toFloat()) {
-                        solutionInputIso = solutionInputIso!!.copy(initialForce = it.toDouble())
-                    }
-                    SolutionSlider("ลดแรงเข็นต่อเนื่อง (Sustain N)", solutionInputIso!!.sustainForce.toFloat(), 0f..solutionInputIso!!.sustainForce.toFloat()) {
-                        solutionInputIso = solutionInputIso!!.copy(sustainForce = it.toDouble())
-                    }
-
+                    SolutionSlider("แรงเข็น (N)", solutionInputIso!!.sustainForce.toFloat(), 0f..solutionInputIso!!.sustainForce.toFloat()) { solutionInputIso = solutionInputIso!!.copy(sustainForce = it.toDouble()) }
                 } else if (jobType == JobType.REBA && solutionInputReba != null) {
-                    // --- Sliders: REBA (ปรับ Score) ---
-                    // REBA Score เป็น Int แต่ Slider เป็น Float
-                    Text("ปรับปรุงท่าทาง (ลดคะแนนความเสี่ยง)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0))
-                    Spacer(Modifier.height(8.dp))
-
-                    SolutionSliderInt("คะแนนลำตัว (Trunk)", solutionInputReba!!.trunkScore, 1..solutionInputReba!!.trunkScore) {
-                        solutionInputReba = solutionInputReba!!.copy(trunkScore = it)
-                    }
-                    SolutionSliderInt("คะแนนแขน (Upper Arm)", solutionInputReba!!.upperArmScore, 1..solutionInputReba!!.upperArmScore) {
-                        solutionInputReba = solutionInputReba!!.copy(upperArmScore = it)
-                    }
-                    SolutionSliderInt("คะแนนน้ำหนัก (Load)", solutionInputReba!!.loadScore, 0..solutionInputReba!!.loadScore) {
-                        solutionInputReba = solutionInputReba!!.copy(loadScore = it)
-                    }
+                    Text("ลองลดคะแนนท่าทาง", fontSize = 12.sp, color = Color.Gray)
+                    SolutionSliderInt("ลำตัว (Trunk)", solutionInputReba!!.trunkScore, 1..solutionInputReba!!.trunkScore) { solutionInputReba = solutionInputReba!!.copy(trunkScore = it) }
+                    SolutionSliderInt("แขน (Upper Arm)", solutionInputReba!!.upperArmScore, 1..solutionInputReba!!.upperArmScore) { solutionInputReba = solutionInputReba!!.copy(upperArmScore = it) }
                 }
 
-                Spacer(Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0xFFBBDEFB))
                 Spacer(Modifier.height(8.dp))
-
-                // Result Preview
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("ความเสี่ยงหลังปรับ", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        Text(finalResult.riskLevel.label, color = Color(finalResult.riskLevel.colorHex), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                    Text("คะแนนจำลอง: ", fontSize = 14.sp)
+                    Box(Modifier.background(Color(finalResult.userScoreColor), CircleShape).padding(horizontal = 8.dp)) {
+                        Text("${finalResult.userScore}", color = Color.White, fontWeight = FontWeight.Bold)
                     }
-                    Text(
-                        text = "Score: ${String.format("%.2f", finalResult.score)}",
-                        fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1565C0)
-                    )
                 }
             }
         }
@@ -176,34 +250,109 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
 
         Button(
             onClick = {
-                // ส่งผลลัพธ์ไปหน้า Final
-                // ใช้ key ที่ตกลงกันไว้ (oldScore, newScore ใน route หรือส่ง Object)
-                // ในที่นี้ส่ง Object ผ่าน savedStateHandle เพื่อความครบถ้วน
                 navController.currentBackStackEntry?.savedStateHandle?.set("initialResult", initialResult)
                 navController.currentBackStackEntry?.savedStateHandle?.set("finalResult", finalResult)
+                navController.currentBackStackEntry?.savedStateHandle?.set("selectedSuggestions", ArrayList(selectedSuggestions))
 
-                // Route format: final_result/{oldScore}/{newScore} ตาม MainActivity
-                val oldScoreStr = initialResult.score.toInt().toString()
-                val newScoreStr = finalResult.score.toInt().toString()
+                val oldScoreStr = initialResult.userScore.toString()
+                val newScoreStr = finalResult.userScore.toString()
                 navController.navigate("final_result/$oldScoreStr/$newScoreStr")
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
         ) {
-            Text("บันทึกและสรุปผลการประเมิน", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("สรุปผลการปรับปรุง", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(50.dp))
     }
 }
 
-// --- Helper UI Components ---
+// --- Helper: แปลงชื่ออวัยวะเป็นภาษาไทย ---
+fun getBodyPartNameTH(part: BodyPart): String {
+    return when (part) {
+        BodyPart.NECK -> "คอ"
+        BodyPart.TRUNK -> "หลัง/ลำตัว"  // ระบุชัดเจนว่าเป็นหลัง
+        BodyPart.LEGS -> "ขา/เข่า"
+        BodyPart.ARMS -> "ไหล่/แขน"
+        BodyPart.WRISTS -> "ข้อมือ"
+    }
+}
+
+// --- Helper: Body Map Visualization ---
+@Composable
+fun BodyMapVisualization(bodyRisks: Map<BodyPart, RiskLevel>) {
+    Box(
+        modifier = Modifier
+            .width(100.dp) // ปรับขนาดให้พอดี
+            .height(180.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            val stroke = Stroke(width = 5f, cap = StrokeCap.Round)
+            val colorBody = Color.LightGray
+
+            // วาดคน (Stickman)
+            drawCircle(colorBody, radius = w * 0.12f, center = Offset(w / 2, h * 0.15f), style = stroke) // หัว
+            drawLine(colorBody, start = Offset(w / 2, h * 0.2f), end = Offset(w / 2, h * 0.55f), strokeWidth = 5f, cap = StrokeCap.Round) // ลำตัว
+            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.15f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round) // แขนซ้าย
+            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.85f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round) // แขนขวา
+            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.25f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round) // ขาซ้าย
+            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.75f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round) // ขาขวา
+        }
+
+        // Overlay จุดสีตามความเสี่ยง
+        bodyRisks[BodyPart.NECK]?.let { RiskDot(Modifier.align(Alignment.TopCenter).offset(y = 25.dp), it) }
+        bodyRisks[BodyPart.TRUNK]?.let { RiskDot(Modifier.align(Alignment.Center).offset(y = (-20).dp), it) }
+        bodyRisks[BodyPart.ARMS]?.let {
+            RiskDot(Modifier.align(Alignment.TopStart).offset(x = 5.dp, y = 60.dp), it)
+            RiskDot(Modifier.align(Alignment.TopEnd).offset(x = (-5).dp, y = 60.dp), it)
+        }
+        bodyRisks[BodyPart.WRISTS]?.let {
+            RiskDot(Modifier.align(Alignment.TopStart).offset(x = 0.dp, y = 80.dp), it)
+            RiskDot(Modifier.align(Alignment.TopEnd).offset(x = 0.dp, y = 80.dp), it)
+        }
+        bodyRisks[BodyPart.LEGS]?.let { RiskDot(Modifier.align(Alignment.BottomCenter).offset(y = (-30).dp), it) }
+    }
+}
+
+@Composable
+fun RiskDot(modifier: Modifier, level: RiskLevel) {
+    if (level != RiskLevel.LOW) {
+        Box(
+            modifier = modifier
+                .size(14.dp)
+                .background(Color(level.colorHex), CircleShape)
+                .border(1.dp, Color.White, CircleShape)
+        )
+    }
+}
+
+// ... (RiskScoreCircle, Sliders - Code เดิม ใช้ต่อได้เลยครับ) ...
+@Composable
+fun RiskScoreCircle(result: ErgoResult) {
+    val color = Color(result.userScoreColor)
+    Box(
+        modifier = Modifier
+            .size(110.dp)
+            .background(Color.White, shape = CircleShape)
+            .border(8.dp, color, CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "${result.userScore}", fontSize = 42.sp, fontWeight = FontWeight.Bold, color = color)
+            Text(text = "ระดับความเสี่ยง", fontSize = 10.sp, color = Color.Gray)
+        }
+    }
+}
 
 @Composable
 fun SolutionSlider(label: String, value: Float, range: ClosedFloatingPointRange<Float>, onValueChange: (Float) -> Unit) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, fontSize = 13.sp)
-            Text(String.format("%.1f", value), fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 13.sp)
+            Text(label, fontSize = 12.sp)
+            Text(String.format("%.1f", value), fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 12.sp)
         }
         Slider(
             value = value,
@@ -218,8 +367,8 @@ fun SolutionSlider(label: String, value: Float, range: ClosedFloatingPointRange<
 fun SolutionSliderInt(label: String, value: Int, range: IntRange, onValueChange: (Int) -> Unit) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, fontSize = 13.sp)
-            Text("$value", fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 13.sp)
+            Text(label, fontSize = 12.sp)
+            Text("$value", fontWeight = FontWeight.Bold, color = Color(0xFF1565C0), fontSize = 12.sp)
         }
         Slider(
             value = value.toFloat(),
@@ -228,35 +377,5 @@ fun SolutionSliderInt(label: String, value: Int, range: IntRange, onValueChange:
             steps = if (range.last - range.first > 0) (range.last - range.first) - 1 else 0,
             colors = SliderDefaults.colors(thumbColor = Color(0xFF1565C0), activeTrackColor = Color(0xFF1565C0), inactiveTrackColor = Color(0xFFBBDEFB))
         )
-    }
-}
-
-@Composable
-fun RiskScoreCircle(result: ErgoResult, jobType: JobType) {
-    val color = Color(result.riskLevel.colorHex)
-    val scoreLabel = when(jobType) {
-        JobType.LIFTING -> "Lifting Index"
-        JobType.PUSH_PULL -> "Risk Ratio"
-        JobType.REBA -> "REBA Score"
-    }
-
-    Box(
-        modifier = Modifier
-            .size(160.dp)
-            .background(Color.White, shape = RoundedCornerShape(100))
-            .border(8.dp, color, RoundedCornerShape(100)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(text = String.format("%.1f", result.score), fontSize = 42.sp, fontWeight = FontWeight.Bold, color = color)
-            Text(text = scoreLabel, fontSize = 12.sp, color = Color.Gray)
-            Text(
-                text = result.riskLevel.label,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = color,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-        }
     }
 }

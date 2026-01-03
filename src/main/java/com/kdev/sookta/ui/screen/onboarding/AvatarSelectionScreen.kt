@@ -1,11 +1,14 @@
 package com.kdev.sookta.ui.screen.onboarding
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -36,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.kdev.sookta.R
@@ -43,7 +47,6 @@ import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.utils.rememberPermissionHelper
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
 
 @Composable
 fun AvatarSelectionScreen(navController: NavController) {
@@ -52,42 +55,28 @@ fun AvatarSelectionScreen(navController: NavController) {
     val db = remember { AppDatabase.getDatabase(context) }
 
     // --- 1. ตรวจสอบสถานะ (Edit หรือ New) ---
+    // ใช้ collectAsState เพื่อรอข้อมูล
     val userPref by db.userPreferenceDao().getPreference().collectAsState(initial = null)
+
+    // ตรวจสอบว่าโหลดข้อมูลเสร็จหรือยัง (ป้องกัน userPref เป็น null)
+    val isDataLoaded = userPref != null
     val isEditMode = remember(userPref) { userPref?.isSetupCompleted == true }
 
     // --- State ---
     var customBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var selectedAvatarResId by remember { mutableStateOf<Int?>(null) }
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
     // รายการ Avatar ตัวอย่าง
     val avatarList = listOf(
-        R.drawable.logo_app,
-        R.drawable.sookta_logo,
-        // เพิ่มรูปอื่นๆ ตรงนี้
+        R.drawable.male_01,
+        R.drawable.female_01,
+        R.drawable.male_02,
+        R.drawable.female_02,
+        // เพิ่มรูปอื่นๆ ตรงนี้ได้
     )
 
-    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    // --- Permission Helper ---
-    val permissionHelper = rememberPermissionHelper(
-        onCameraCapture = { bitmap ->
-            customBitmap = bitmap
-            selectedAvatarResId = null
-        },
-        onGallerySelection = { uri ->
-            val bitmap = if (Build.VERSION.SDK_INT < 28) {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
-            } else {
-                val source = ImageDecoder.createSource(context.contentResolver, uri)
-                ImageDecoder.decodeBitmap(source)
-            }
-            customBitmap = bitmap
-            selectedAvatarResId = null
-        }
-    )
-
-    // Camera Launcher
+    // --- Camera Launcher (รับผลลัพธ์จากกล้อง) ---
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && tempImageUri != null) {
             try {
@@ -98,19 +87,63 @@ fun AvatarSelectionScreen(navController: NavController) {
                     val source = ImageDecoder.createSource(context.contentResolver, tempImageUri!!)
                     ImageDecoder.decodeBitmap(source)
                 }
+                // ย่อภาพเพื่อประหยัด Memory
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, 600, 600, true)
+                customBitmap = scaledBitmap
+                selectedAvatarResId = null
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Toast.makeText(context, context.getString(R.string.error_load_image), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // ฟังก์ชันเปิดกล้องอย่างปลอดภัย
+    fun launchCameraSafe() {
+        try {
+            val uri = createImageUri(context)
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        } catch (e: Exception) {
+            val msg = context.getString(R.string.error_camera_open, e.message)
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+        }
+    }
+
+    // --- Permission Check ---
+    // ตัวขอ Permission กล้อง ถ้าได้สิทธิ์แล้วค่อยเปิดกล้อง
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchCameraSafe()
+        } else {
+            Toast.makeText(context, context.getString(R.string.permission_camera_required), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- Permission Helper (สำหรับ Gallery) ---
+    val permissionHelper = rememberPermissionHelper(
+        onCameraCapture = {
+            // ไม่ใช้ Callback นี้ เพราะเราใช้ Custom Camera Launcher ด้านบน
+        },
+        onGallerySelection = { uri ->
+            try {
+                val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                } else {
+                    val source = ImageDecoder.createSource(context.contentResolver, uri)
+                    ImageDecoder.decodeBitmap(source)
+                }
                 customBitmap = bitmap
                 selectedAvatarResId = null
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
-    }
-
-    fun launchCameraSafe() {
-        val uri = createImageUri(context)
-        tempImageUri = uri
-        cameraLauncher.launch(uri)
-    }
+    )
 
     Column(
         modifier = Modifier
@@ -121,7 +154,7 @@ fun AvatarSelectionScreen(navController: NavController) {
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = if (isEditMode) "เปลี่ยนรูปโปรไฟล์" else stringResource(R.string.avatar_title),
+            text = stringResource(if (isEditMode) R.string.avatar_edit_title else R.string.avatar_title),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF5C9A81)
@@ -157,6 +190,7 @@ fun AvatarSelectionScreen(navController: NavController) {
                     contentScale = ContentScale.Crop
                 )
             } else {
+                // แสดงรูปเดิมถ้ามี (ในโหมดแก้ไข) หรือแสดง Icon ว่าง
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = null,
@@ -174,7 +208,14 @@ fun AvatarSelectionScreen(navController: NavController) {
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             Button(
-                onClick = { launchCameraSafe() },
+                onClick = {
+                    // ตรวจสอบสิทธิ์ก่อนเปิดกล้อง
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        launchCameraSafe()
+                    } else {
+                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C9A81))
             ) {
                 Icon(Icons.Default.CameraAlt, contentDescription = null)
@@ -222,38 +263,38 @@ fun AvatarSelectionScreen(navController: NavController) {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // --- 4. ปุ่มยืนยัน (ปรับปรุง Logic การบันทึก) ---
+        // --- 4. ปุ่มยืนยัน ---
         Button(
             onClick = {
                 scope.launch {
-                    // เตรียมข้อมูล Avatar String
                     val avatarValue = if (selectedAvatarResId != null) {
-                        // กรณีเลือกรูปการ์ตูน: เก็บ Resource ID
-                        "res:${selectedAvatarResId}"
+                        "res:$selectedAvatarResId"
                     } else if (customBitmap != null) {
-                        // กรณีถ่ายรูป/เลือกรูป: บันทึกไฟล์ลงเครื่อง แล้วเก็บ Path
-                        val savedPath = saveImageToInternalStorage(context, customBitmap!!)
-                        savedPath // เก็บ Path เช่น /data/user/0/.../profile.jpg
+                        saveImageToInternalStorage(context, customBitmap!!)
                     } else {
                         null
                     }
 
                     if (avatarValue != null) {
-                        // บันทึกและจบการ Setup
+                        // บันทึกข้อมูล
                         db.userPreferenceDao().updateAvatarAndFinish(avatarValue)
 
-                        // --- 5. Navigation Logic (แยกกรณี Edit/New) ---
+                        // นำทาง (Navigation)
                         if (isEditMode) {
-                            navController.popBackStack() // กลับไปหน้า Profile
+                            navController.popBackStack()
                         } else {
+                            // ไปหน้า MainScreen (หลังจาก Setup เสร็จ)
                             navController.navigate("main") {
                                 popUpTo("splash") { inclusive = true }
                             }
                         }
+                    } else {
+                        Toast.makeText(context, context.getString(R.string.avatar_select_warning), Toast.LENGTH_SHORT).show()
                     }
                 }
             },
-            enabled = customBitmap != null || selectedAvatarResId != null,
+            // ปุ่มจะกดได้เมื่อเลือกรูปแล้ว และข้อมูล userPref โหลดเสร็จแล้ว
+            enabled = (customBitmap != null || selectedAvatarResId != null) && isDataLoaded,
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
         ) {
@@ -299,26 +340,23 @@ fun AvatarItem(resId: Int, isSelected: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ... createImageUri เหมือนเดิม ...
+// --- ฟังก์ชันสร้าง URI สำหรับเก็บรูปชั่วคราว ---
 fun createImageUri(context: Context): Uri {
     val directory = File(context.cacheDir, "images")
-    directory.mkdirs()
+    if (!directory.exists()) {
+        directory.mkdirs()
+    }
     val file = File.createTempFile("selected_image_", ".jpg", directory)
+    // ตรงนี้สำคัญ: authorities ต้องตรงกับใน AndroidManifest
     val authority = "${context.packageName}.provider"
     return FileProvider.getUriForFile(context, authority, file)
 }
 
-// --- ฟังก์ชันเพิ่มใหม่: บันทึก Bitmap ลง Internal Storage ---
+// --- ฟังก์ชันบันทึกรูปลงเครื่อง ---
 fun saveImageToInternalStorage(context: Context, bitmap: Bitmap): String {
-    // ตั้งชื่อไฟล์ (ใช้ timestamp เพื่อไม่ให้ซ้ำ)
     val fileName = "profile_${System.currentTimeMillis()}.jpg"
-
-    // เปิด Output Stream เพื่อเขียนไฟล์ลงใน private storage ของแอป
     context.openFileOutput(fileName, Context.MODE_PRIVATE).use { stream ->
-        // บีบอัดเป็น JPG คุณภาพ 90%
         bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
     }
-
-    // คืนค่า Absolute Path กลับไปเพื่อบันทึกลง Database
     return File(context.filesDir, fileName).absolutePath
 }

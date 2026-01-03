@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,24 +64,40 @@ fun HomeScreen(navController: NavController) {
                         .clip(CircleShape)
                         .background(Color.White)
                 ) {
-                    if (userPref?.avatarPath != null) {
-                        val imgFile = File(userPref!!.avatarPath!!)
-                        if (imgFile.exists()) {
-                            val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = "Profile",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.padding(10.dp).fillMaxSize(),
-                                tint = Color.Gray
-                            )
+                    val avatarPath = userPref?.avatarPath
+
+                    if (avatarPath != null) {
+
+                        if (avatarPath.startsWith("res:")) {
+                            val resId = avatarPath.removePrefix("res:").toIntOrNull()
+                            if (resId != null) {
+                                Image(
+                                    painter = painterResource(id = resId),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }else{
+                            val imgFile = File(userPref!!.avatarPath!!)
+                            if (imgFile.exists()) {
+                                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Profile",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.padding(10.dp).fillMaxSize(),
+                                    tint = Color.Gray
+                                )
+                            }
                         }
+
                     } else {
                         Icon(
                             Icons.Default.Person,
@@ -139,24 +156,24 @@ fun HomeScreen(navController: NavController) {
                         onClick = { navController.navigate("evaluation_menu") }
                     )
                 }
-                item {
-                    HomeMenuCard(
-                        title = stringResource(R.string.menu_exercise),
-                        icon = Icons.Default.AccessibilityNew,
-                        color = Color(0xFFE1F5FE),
-                        onClick = { throw RuntimeException("Test Crash: Press Exercises") }
-                    )
-                }
-                item {
-                    HomeMenuCard(
-                        title = stringResource(R.string.menu_knowledge),
-                        icon = Icons.AutoMirrored.Filled.MenuBook,
-                        color = Color(0xFFFFF3E0),
-                        onClick = {
-                            throw RuntimeException("Test Crash: Press General Knowledge")
-                        }
-                    )
-                }
+//                item {
+//                    HomeMenuCard(
+//                        title = stringResource(R.string.menu_exercise),
+//                        icon = Icons.Default.AccessibilityNew,
+//                        color = Color(0xFFE1F5FE),
+//                        onClick = { throw RuntimeException("Test Crash: Press Exercises") }
+//                    )
+//                }
+//                item {
+//                    HomeMenuCard(
+//                        title = stringResource(R.string.menu_knowledge),
+//                        icon = Icons.AutoMirrored.Filled.MenuBook,
+//                        color = Color(0xFFFFF3E0),
+//                        onClick = {
+//                            throw RuntimeException("Test Crash: Press General Knowledge")
+//                        }
+//                    )
+//                }
 
             }
         }

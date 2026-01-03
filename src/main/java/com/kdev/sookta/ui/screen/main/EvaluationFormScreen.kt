@@ -43,77 +43,87 @@ import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.JobType
 import com.kdev.sookta.model.RebaInputData
 import com.kdev.sookta.utils.ErgoCalculatorHelper
+import com.kdev.sookta.utils.PoseEstimatorHelper
 import com.kdev.sookta.utils.rememberPermissionHelper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvaluationFormScreen(navController: NavController, activityNameArg: String) {
     val context = LocalContext.current
-    // ดึงชื่อกิจกรรม
+    val poseHelper = remember { PoseEstimatorHelper(context) }
     val activityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
     val userDao = remember { AppDatabase.getDatabase(context).userPreferenceDao() }
+
+    // ดึงข้อมูล User (รวมถึงรายได้)
     val userPrefState by userDao.getPreference().collectAsState(initial = null)
-    // ตรวจสอบ JobType: เพิ่ม Logic เช็ค REBA
+
+    // [Updated] คำนวณรายได้ต่อวัน (ถ้าไม่มีให้ใช้ Default 300)
+    val userDailyIncome = remember(userPrefState) {
+        val yearly = userPrefState?.incomePerYear?.toDoubleOrNull()
+        if (yearly != null && yearly > 0) yearly / 365.0 else 300.0
+    }
+
     val currentJobType = remember(activityName) {
+        // แปลงเป็น lowercase เพื่อให้เช็คง่ายทั้ง EN/TH
+        val name = activityName.lowercase()
+
         when {
-            activityName.contains("เข็น") || activityName.contains("Push") || activityName.contains("Pull") -> JobType.PUSH_PULL
-            activityName.contains("ท่าทาง") || activityName.contains("Posture") || activityName.contains("REBA") -> JobType.REBA
-            else -> JobType.LIFTING
+            // กลุ่มงานเข็น (Push/Pull) - ถ้าชื่อมีคำว่า เข็น, push, pull, cart
+            name.contains("เข็น") || name.contains("push") || name.contains("pull") || name.contains("cart") -> JobType.PUSH_PULL
+
+            // กลุ่มงานขนย้าย (Transport) - อาจเป็นยกหรือเข็น (ให้ Default เป็น Lifting ถ้าไม่มีคำว่าเข็น)
+            name.contains("ขนย้าย") || name.contains("transport") || name.contains("แบก") || name.contains("ยก") || name.contains("lifting") -> JobType.LIFTING
+
+            // นอกนั้นให้เป็นงานท่าทาง (REBA) ทั้งหมด
+            // (ปลูก, ใส่ปุ๋ย, พ่นยา, ตัดแต่ง, เก็บเกี่ยว -> ล้วนเน้นท่าทาง)
+            else -> JobType.REBA
         }
     }
 
-    // State เก็บรูปภาพ
     val selectedBitmaps = remember { mutableStateListOf<Bitmap>() }
 
-    // --- Dropdown Options (Standard) ---
+    // --- Options ---
     val durationOptions = listOf("1 ชม.", "2 ชม.", "4 ชม.", "8 ชม.")
     val frequencyOptions = listOf("น้อย (< 0.2/นาที)", "ปานกลาง (1-4/นาที)", "ถี่มาก (> 6/นาที)")
     val weightOptions = listOf("< 5 kg", "5-10 kg", "10-15 kg", "15-20 kg", "> 20 kg")
 
-    // --- Dropdown Options (REBA Scores - Simplified Labels) ---
+    // REBA Options
     val trunkOptions = listOf("ตรง/ปกติ (1)", "ก้มเล็กน้อย (2)", "ก้มปานกลาง (3)", "ก้มมาก (4)")
     val neckOptions = listOf("ตรง (1)", "ก้ม/เงย (2)")
     val legOptions = listOf("ยืนมั่นคง (1)", "ยืนขาเดียว/ไม่มั่นคง (2)")
     val upperArmOptions = listOf("ปกติ (1)", "ยกเล็กน้อย (2)", "ยกสูง (3)", "ยกสูงมาก (4)")
     val loadScoreOptions = listOf("< 5 kg (0)", "5-10 kg (1)", "> 10 kg (2)")
 
-    // State ข้อมูลจาก Dropdown (General)
+    // --- State ---
     var selectedDuration by remember { mutableStateOf(durationOptions[0]) }
     var selectedFrequency by remember { mutableStateOf(frequencyOptions[0]) }
     var selectedWeight by remember { mutableStateOf(weightOptions[0]) }
-
     var expandedDuration by remember { mutableStateOf(false) }
     var expandedFrequency by remember { mutableStateOf(false) }
     var expandedWeight by remember { mutableStateOf(false) }
 
-    // State สำหรับ REBA Inputs
+    // REBA State
     var rebaTrunk by remember { mutableStateOf(trunkOptions[0]) }
     var rebaNeck by remember { mutableStateOf(neckOptions[0]) }
     var rebaLeg by remember { mutableStateOf(legOptions[0]) }
     var rebaUpperArm by remember { mutableStateOf(upperArmOptions[0]) }
     var rebaLoad by remember { mutableStateOf(loadScoreOptions[0]) }
-
     var expTrunk by remember { mutableStateOf(false) }
     var expNeck by remember { mutableStateOf(false) }
     var expLeg by remember { mutableStateOf(false) }
     var expUpperArm by remember { mutableStateOf(false) }
     var expLoad by remember { mutableStateOf(false) }
 
-    // --- Advanced Inputs ---
-    // Lifting
+    // Advanced Inputs
     var inputHorizontalDist by remember { mutableStateOf("25") }
     var inputVerticalHeight by remember { mutableStateOf("75") }
-    // Push/Pull
     var inputForceInitial by remember { mutableStateOf("0") }
     var inputForceSustain by remember { mutableStateOf("0") }
 
     var activeSlotIndex by remember { mutableIntStateOf(-1) }
 
-    // --- Permission Helper ---
     val permissionHelper = rememberPermissionHelper(
-        onCameraCapture = { bitmap ->
-            if (selectedBitmaps.size < 4) selectedBitmaps.add(bitmap)
-        },
+        onCameraCapture = { bitmap -> if (selectedBitmaps.size < 4) selectedBitmaps.add(bitmap) },
         onGallerySelection = { uri ->
             val bitmap = if (Build.VERSION.SDK_INT < 28) {
                 @Suppress("DEPRECATION")
@@ -161,7 +171,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
 
             Spacer(Modifier.height(16.dp))
 
-            // --- ส่วนรูปภาพ (เหมือนเดิม) ---
+            // --- Images Section ---
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -204,16 +214,14 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
             Text("ข้อมูลสำหรับการประเมิน", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333), modifier = Modifier.align(Alignment.Start))
             Spacer(Modifier.height(12.dp))
 
-            // --- Dynamic Input Form based on JobType ---
+            // --- Form Inputs ---
             when (currentJobType) {
                 JobType.LIFTING -> {
-                    // --- Form งานยก (ISO 11228-1) ---
                     SooktaDropdown(stringResource(R.string.label_duration), durationOptions, selectedDuration, { selectedDuration = it }, expandedDuration, { expandedDuration = it })
                     Spacer(Modifier.height(12.dp))
                     SooktaDropdown(stringResource(R.string.label_frequency), frequencyOptions, selectedFrequency, { selectedFrequency = it }, expandedFrequency, { expandedFrequency = it })
                     Spacer(Modifier.height(12.dp))
                     SooktaDropdown(stringResource(R.string.label_weight), weightOptions, selectedWeight, { selectedWeight = it }, expandedWeight, { expandedWeight = it })
-
                     Spacer(Modifier.height(16.dp))
                     Text("ข้อมูลเชิงลึก (Optional)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -221,9 +229,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                         OutlinedTextField(value = inputVerticalHeight, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputVerticalHeight = it }, label = { Text("ความสูง (V) cm") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
                     }
                 }
-
                 JobType.PUSH_PULL -> {
-                    // --- Form งานเข็น (ISO 11228-2) ---
                     SooktaDropdown(stringResource(R.string.label_duration), durationOptions, selectedDuration, { selectedDuration = it }, expandedDuration, { expandedDuration = it })
                     Spacer(Modifier.height(16.dp))
                     Text("แรงที่วัดได้ (จำเป็น)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
@@ -232,16 +238,13 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                         OutlinedTextField(value = inputForceSustain, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceSustain = it }, label = { Text("แรงขณะเข็น (Sustain) N") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
                     }
                 }
-
                 JobType.REBA -> {
-                    // --- Form ประเมินท่าทาง (REBA) ---
                     Text("คะแนนส่วนลำตัว (Group A)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                     SooktaDropdown("ลำตัว (Trunk)", trunkOptions, rebaTrunk, { rebaTrunk = it }, expTrunk, { expTrunk = it })
                     Spacer(Modifier.height(8.dp))
                     SooktaDropdown("คอ (Neck)", neckOptions, rebaNeck, { rebaNeck = it }, expNeck, { expNeck = it })
                     Spacer(Modifier.height(8.dp))
                     SooktaDropdown("ขา (Legs)", legOptions, rebaLeg, { rebaLeg = it }, expLeg, { expLeg = it })
-
                     Spacer(Modifier.height(16.dp))
                     Text("คะแนนส่วนแขน (Group B)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                     SooktaDropdown("ต้นแขน (Upper Arm)", upperArmOptions, rebaUpperArm, { rebaUpperArm = it }, expUpperArm, { expUpperArm = it })
@@ -256,26 +259,55 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
             Button(
                 onClick = {
                     val result: ErgoResult
-                    val inputData: Any // ใช้ Any เพื่อรองรับทั้ง ErgoInputData และ RebaInputData
+                    val inputData: Any
 
                     if (currentJobType == JobType.REBA) {
-                        // 1. Prepare REBA Input
-                        val rebaInput = RebaInputData(
-                            trunkScore = trunkOptions.indexOf(rebaTrunk) + 1,
-                            neckScore = neckOptions.indexOf(rebaNeck) + 1,
-                            legScore = legOptions.indexOf(rebaLeg) + 1,
-                            upperArmScore = upperArmOptions.indexOf(rebaUpperArm) + 1,
+
+                        var maxAiTrunk = 1
+                        var maxAiNeck = 1
+                        var maxAiUpperArm = 1
+                        val maxAiLeg = 1
+
+                        if (selectedBitmaps.isNotEmpty()) {
+                            selectedBitmaps.forEach { bitmap ->
+                                // ให้ AI วิเคราะห์ทีละรูป
+                                val aiResult = poseHelper.estimatePoseAndGetReba(bitmap, userDailyIncome)
+
+                                // เปรียบเทียบหาค่าความเสี่ยงสูงสุด (Worst Case) เก็บไว้
+                                if (aiResult.trunkScore > maxAiTrunk) maxAiTrunk = aiResult.trunkScore
+                                if (aiResult.neckScore > maxAiNeck) maxAiNeck = aiResult.neckScore
+                                if (aiResult.upperArmScore > maxAiUpperArm) maxAiUpperArm = aiResult.upperArmScore
+                                // (Leg AI ยังไม่เก่ง อาจจะข้ามไป หรือใช้ logic เดียวกันก็ได้)
+                                // if (aiResult.legScore > maxAiLeg) maxAiLeg = aiResult.legScore
+                            }
+                        }
+
+                        // 2. ผสมค่าจาก AI (Max) กับค่าจาก Dropdown (User Input)
+                        // Logic: เลือกค่าที่ "มากกว่า" ระหว่าง Dropdown กับ AI (Safety First)
+                        // แต่ถ้า User ตั้งใจเลือกค่าต่ำ (Dropdown) เราอาจจะยอมให้ User Override ได้
+                        // ในที่นี้ใช้ maxOf เพื่อความปลอดภัย (ถ้า AI เห็นว่าเสี่ยง ให้ถือว่าเสี่ยง)
+                        val mergedInput = RebaInputData(
+                            dailyIncome = userDailyIncome,
+
+                            // เทียบค่า User เลือก vs ค่าสูงสุดที่ AI เจอ
+                            trunkScore = maxOf(trunkOptions.indexOf(rebaTrunk) + 1, maxAiTrunk),
+                            neckScore = maxOf(neckOptions.indexOf(rebaNeck) + 1, maxAiNeck),
+                            upperArmScore = maxOf(upperArmOptions.indexOf(rebaUpperArm) + 1, maxAiUpperArm),
+                            legScore = maxOf(legOptions.indexOf(rebaLeg) + 1, maxAiLeg), // หรือใช้ค่าจาก Dropdown อย่างเดียวถ้าไม่มั่นใจ AI ขา
+
+                            // ส่วนที่ AI ดูไม่ได้ ต้องเชื่อ User 100%
                             loadScore = loadScoreOptions.indexOf(rebaLoad),
-                            // Default values for simplified form
+
+                            // ค่า Default อื่นๆ
                             lowerArmScore = 1,
                             wristScore = 1,
                             couplingScore = 0,
                             activityScore = 0
                         )
-                        inputData = rebaInput
-                        result = ErgoCalculatorHelper.calculateRebaRisk(rebaInput)
+                        inputData = mergedInput
+                        result = ErgoCalculatorHelper.calculateRebaRisk(mergedInput)
                     } else {
-                        // 2. Prepare ISO Input (Lifting or Push/Pull)
+                        // ISO 11228 Logic
                         val weightVal = when (selectedWeight) {
                             weightOptions[0] -> 5.0
                             weightOptions[1] -> 10.0
@@ -286,9 +318,11 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                         val freqVal = if (selectedFrequency.contains("<")) 0.2 else if (selectedFrequency.contains("1-4")) 2.0 else 6.0
                         val durationVal = if (selectedDuration.contains("1")) 1.0 else if (selectedDuration.contains("2")) 2.0 else if (selectedDuration.contains("4")) 4.0 else 8.0
 
+                        // [Updated] ส่ง dailyIncome เข้าไปใน ErgoInputData
                         val ergoInput = ErgoInputData(
                             jobType = currentJobType,
                             gender = userPrefState?.gender ?: "male",
+                            dailyIncome = userDailyIncome, // <-- สำคัญ
                             loadWeight = weightVal,
                             horizontalDist = inputHorizontalDist.toDoubleOrNull() ?: 25.0,
                             verticalHeight = inputVerticalHeight.toDoubleOrNull() ?: 75.0,
@@ -307,12 +341,14 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                     }
 
                     // 3. Navigate with Results
+                    // ส่ง Object ทั้งก้อนไปเลย ปลายทางจะได้รับครบทุกฟิลด์ (userScore, economicLoss)
                     navController.currentBackStackEntry?.savedStateHandle?.set("riskResult", result)
-                    navController.currentBackStackEntry?.savedStateHandle?.set("inputData", inputData) // ส่ง Object ไปด้วย (อาจต้อง cast ปลายทาง)
+                    navController.currentBackStackEntry?.savedStateHandle?.set("inputData", inputData)
 
-                    navController.navigate("initial_risk/$activityNameArg/${result.score}")
+                    // เปลี่ยน Route Argument เป็น userScore แทน score เดิม (เพื่อให้ url ดูง่ายขึ้น)
+                    navController.navigate("initial_risk/$activityNameArg/${result.userScore}")
                 },
-                enabled = selectedBitmaps.isNotEmpty(), // บังคับให้ใส่รูปอย่างน้อย 1 รูป
+                enabled = selectedBitmaps.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE65100))
             ) {
@@ -324,7 +360,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
     }
 }
 
-// ... (Helper Composables: ImageSlotCard, SooktaDropdown Keep as is) ...
+// ... Helper Composables (ImageSlotCard, SooktaDropdown) เหมือนเดิม ...
 @Composable
 fun ImageSlotCard(bitmap: Bitmap?, modifier: Modifier = Modifier, onAddClick: () -> Unit, onDeleteClick: () -> Unit, enabled: Boolean = true) {
     Box(

@@ -23,13 +23,12 @@ import com.kdev.sookta.R
 fun EvaluationMenuScreen(navController: NavController) {
 
     val activities = listOf(
-        R.string.job_harvest,
-        R.string.job_digging,
-        R.string.job_sorting,
-        R.string.job_cart,
-        R.string.job_basket,
-        R.string.job_spray,
-        R.string.job_fertilizer
+        R.string.job_transplanting,
+        R.string.job_fertilizing,
+        R.string.job_pesticide,
+        R.string.job_pruning,
+        R.string.job_harvesting,
+        R.string.job_transport
     )
 
     Scaffold(

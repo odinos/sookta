@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,18 +88,36 @@ fun ProfileScreen(navController: NavController) {
                             .border(4.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (userPref?.avatarPath != null) {
-                            val imgFile = File(userPref!!.avatarPath!!)
-                            if (imgFile.exists()) {
-                                val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
-                                    contentDescription = "Profile Avatar",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.fillMaxSize()
-                                )
+
+                        val avatarPath = userPref?.avatarPath
+
+
+                        if (avatarPath != null) {
+
+                            if (avatarPath.startsWith("res:")) {
+                                // [กรณี 1] เป็นรูปการ์ตูน (Resource ID)
+                                val resId = avatarPath.removePrefix("res:").toIntOrNull()
+                                if (resId != null) {
+                                    Image(
+                                        painter = painterResource(id = resId),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                }
                             } else {
-                                Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(60.dp))
+                                val imgFile = File(avatarPath)
+                                if (imgFile.exists()) {
+                                    val bitmap = BitmapFactory.decodeFile(imgFile.absolutePath)
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Profile Avatar",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(60.dp))
+                                }
                             }
                         } else {
                             Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(60.dp))
@@ -144,8 +163,20 @@ fun ProfileScreen(navController: NavController) {
                     unit = stringResource(R.string.unit_cm),
                     modifier = Modifier.weight(1f)
                 )
-            }
 
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                StatCard(
+                    title = "รายได้ต่อปี",
+                    value = userPref?.incomePerYear ?: "-",
+                    unit = "บาท",
+                    modifier = Modifier.fillMaxWidth() // ให้กว้างเต็มจอหรือปรับตามความสวยงาม
+                )
+            }
             Spacer(Modifier.height(30.dp))
 
             // --- 3. เมนูการตั้งค่า (Menu List) ---

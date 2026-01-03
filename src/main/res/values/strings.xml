@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">Sookta</string>
 
+    <string name="job_transplanting">Transplanting</string>
+    <string name="job_fertilizing">Fertilizing</string>
+    <string name="job_pesticide">Pesticide Spraying</string>
+    <string name="job_pruning">Pruning</string>
+    <string name="job_harvesting">Harvesting</string>
+    <string name="job_transport">On-farm Transport</string>
+
     <string name="welcome_to">Welcome to</string>
     <string name="select_lang_desc">Please select language to start</string>
     <string name="lang_thai">Thai</string>
@@ -159,4 +166,10 @@
     <string name="avatar_gallery">Gallery</string>
     <string name="avatar_confirm">Confirm Profile Picture</string>
     <string name="avatar_select_hint">Select from the list below</string>
+
+    <string name="avatar_edit_title">Change Profile Picture</string>
+    <string name="error_load_image">Failed to load image</string>
+    <string name="error_camera_open">Cannot open camera: %1$s</string>
+    <string name="permission_camera_required">Camera permission is required to take photos</string>
+    <string name="avatar_select_warning">Please select an image</string>
 </resources>

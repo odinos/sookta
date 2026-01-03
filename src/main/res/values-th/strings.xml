@@ -2,6 +2,13 @@
 <resources>
     <string name="app_name">สุขท่า</string>
 
+    <string name="job_transplanting">การปลูกกล้า</string>
+    <string name="job_fertilizing">การใส่ปุ๋ย</string>
+    <string name="job_pesticide">การฉีดพ่นสารกำจัดศัตรูพืช</string>
+    <string name="job_pruning">การตัดแต่งกิ่ง</string>
+    <string name="job_harvesting">การเก็บเกี่ยว</string>
+    <string name="job_transport">การขนย้ายผลผลิต</string>
+
     <string name="welcome_to">ยินดีต้อนรับสู่</string>
     <string name="select_lang_desc">กรุณาเลือกภาษาเพื่อเริ่มต้นใช้งาน</string>
     <string name="lang_thai">ภาษาไทย</string>
@@ -161,4 +168,10 @@
     <string name="avatar_gallery">อัลบั้ม</string>
     <string name="avatar_confirm">ยืนยันรูปโปรไฟล์</string>
     <string name="avatar_select_hint">เลือกจากรายการด้านล่าง</string>
+
+    <string name="avatar_edit_title">เปลี่ยนรูปโปรไฟล์</string>
+    <string name="error_load_image">โหลดรูปไม่สำเร็จ</string>
+    <string name="error_camera_open">ไม่สามารถเปิดกล้องได้: %1$s</string>
+    <string name="permission_camera_required">ต้องขออนุญาตใช้กล้องเพื่อถ่ายรูป</string>
+    <string name="avatar_select_warning">กรุณาเลือกรูปภาพ</string>
 </resources>
