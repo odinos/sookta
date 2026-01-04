@@ -69,3 +69,17 @@ fun TextWithSpeaker(
         SpeakButton(textToSpeak = text, ttsManager = ttsManager)
     }
 }
+
+@Composable
+fun TTSButton(text: String, ttsManager: TextToSpeechManager, modifier: Modifier = Modifier) {
+    IconButton(
+        onClick = { ttsManager.speak(text) },
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.VolumeUp, // หรือ Icons.Rounded.VolumeUp
+            contentDescription = "Read aloud",
+            tint = Color(0xFF5C9A81) // สีเขียวธีมแอป
+        )
+    }
+}

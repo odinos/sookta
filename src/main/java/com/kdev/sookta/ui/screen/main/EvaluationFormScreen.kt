@@ -42,6 +42,7 @@ import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.JobType
 import com.kdev.sookta.model.RebaInputData
+import com.kdev.sookta.utils.AnalyticsManager
 import com.kdev.sookta.utils.ErgoCalculatorHelper
 import com.kdev.sookta.utils.PoseEstimatorHelper
 import com.kdev.sookta.utils.rememberPermissionHelper
@@ -50,6 +51,7 @@ import com.kdev.sookta.utils.rememberPermissionHelper
 @Composable
 fun EvaluationFormScreen(navController: NavController, activityNameArg: String) {
     val context = LocalContext.current
+    val analyticsManager = remember { AnalyticsManager(context) }
     val poseHelper = remember { PoseEstimatorHelper(context) }
     val activityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
     val userDao = remember { AppDatabase.getDatabase(context).userPreferenceDao() }
@@ -83,16 +85,56 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
     val selectedBitmaps = remember { mutableStateListOf<Bitmap>() }
 
     // --- Options ---
-    val durationOptions = listOf("1 ชม.", "2 ชม.", "4 ชม.", "8 ชม.")
-    val frequencyOptions = listOf("น้อย (< 0.2/นาที)", "ปานกลาง (1-4/นาที)", "ถี่มาก (> 6/นาที)")
-    val weightOptions = listOf("< 5 kg", "5-10 kg", "10-15 kg", "15-20 kg", "> 20 kg")
+    val durationOptions = listOf(
+        stringResource(R.string.opt_dur_1h),
+        stringResource(R.string.opt_dur_2h),
+        stringResource(R.string.opt_dur_4h),
+        stringResource(R.string.opt_dur_8h)
+    )
+    val frequencyOptions = listOf(
+        stringResource(R.string.opt_freq_low),
+        stringResource(R.string.opt_freq_med),
+        stringResource(R.string.opt_freq_high)
+    )
+    val weightOptions = listOf(
+        stringResource(R.string.opt_weight_5),
+        stringResource(R.string.opt_weight_10),
+        stringResource(R.string.opt_weight_15),
+        stringResource(R.string.opt_weight_20),
+        stringResource(R.string.opt_weight_max)
+    )
 
-    // REBA Options
-    val trunkOptions = listOf("ตรง/ปกติ (1)", "ก้มเล็กน้อย (2)", "ก้มปานกลาง (3)", "ก้มมาก (4)")
-    val neckOptions = listOf("ตรง (1)", "ก้ม/เงย (2)")
-    val legOptions = listOf("ยืนมั่นคง (1)", "ยืนขาเดียว/ไม่มั่นคง (2)")
-    val upperArmOptions = listOf("ปกติ (1)", "ยกเล็กน้อย (2)", "ยกสูง (3)", "ยกสูงมาก (4)")
-    val loadScoreOptions = listOf("< 5 kg (0)", "5-10 kg (1)", "> 10 kg (2)")
+    // REBA Options (Fully Localized)
+    // ใช้ stringResource ดึงข้อความมาแสดงผล
+    val trunkOptions = listOf(
+        stringResource(R.string.opt_reba_trunk_1),
+        stringResource(R.string.opt_reba_trunk_2),
+        stringResource(R.string.opt_reba_trunk_3),
+        stringResource(R.string.opt_reba_trunk_4)
+    )
+
+    val neckOptions = listOf(
+        stringResource(R.string.opt_reba_neck_1),
+        stringResource(R.string.opt_reba_neck_2)
+    )
+
+    val legOptions = listOf(
+        stringResource(R.string.opt_reba_leg_1),
+        stringResource(R.string.opt_reba_leg_2)
+    )
+
+    val upperArmOptions = listOf(
+        stringResource(R.string.opt_reba_ua_1),
+        stringResource(R.string.opt_reba_ua_2),
+        stringResource(R.string.opt_reba_ua_3),
+        stringResource(R.string.opt_reba_ua_4)
+    )
+
+    val loadScoreOptions = listOf(
+        stringResource(R.string.opt_reba_load_0),
+        stringResource(R.string.opt_reba_load_1),
+        stringResource(R.string.opt_reba_load_2)
+    )
 
     // --- State ---
     var selectedDuration by remember { mutableStateOf(durationOptions[0]) }
@@ -140,6 +182,10 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
             }
         }
     )
+
+    LaunchedEffect(Unit) {
+        analyticsManager.logScreenView("EvaluationFormScreen")
+    }
 
     Scaffold(
         topBar = {
@@ -211,7 +257,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
             HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
             Spacer(Modifier.height(16.dp))
 
-            Text("ข้อมูลสำหรับการประเมิน", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333), modifier = Modifier.align(Alignment.Start))
+            Text(stringResource(R.string.form_section_info), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF333333), modifier = Modifier.align(Alignment.Start))
             Spacer(Modifier.height(12.dp))
 
             // --- Form Inputs ---
@@ -223,33 +269,61 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                     Spacer(Modifier.height(12.dp))
                     SooktaDropdown(stringResource(R.string.label_weight), weightOptions, selectedWeight, { selectedWeight = it }, expandedWeight, { expandedWeight = it })
                     Spacer(Modifier.height(16.dp))
-                    Text("ข้อมูลเชิงลึก (Optional)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text(stringResource(R.string.form_section_advanced), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = inputHorizontalDist, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputHorizontalDist = it }, label = { Text("ระยะห่าง (H) cm") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                        OutlinedTextField(value = inputVerticalHeight, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputVerticalHeight = it }, label = { Text("ความสูง (V) cm") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                        OutlinedTextField(value = inputHorizontalDist, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputHorizontalDist = it }, label = { Text(stringResource(R.string.label_dist_h)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = Color(0xFF5C9A81),
+                            cursorColor = Color(0xFF5C9A81)
+                        ))
+                        OutlinedTextField(value = inputVerticalHeight, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputVerticalHeight = it }, label = { Text(stringResource(R.string.label_dist_v)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = Color(0xFF5C9A81),
+                            cursorColor = Color(0xFF5C9A81)
+                        ))
                     }
                 }
                 JobType.PUSH_PULL -> {
                     SooktaDropdown(stringResource(R.string.label_duration), durationOptions, selectedDuration, { selectedDuration = it }, expandedDuration, { expandedDuration = it })
                     Spacer(Modifier.height(16.dp))
-                    Text("แรงที่วัดได้ (จำเป็น)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    Text(stringResource(R.string.form_section_force), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(value = inputForceInitial, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceInitial = it }, label = { Text("แรงเริ่ม (Initial) N") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
-                        OutlinedTextField(value = inputForceSustain, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceSustain = it }, label = { Text("แรงขณะเข็น (Sustain) N") }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true)
+                        OutlinedTextField(value = inputForceInitial, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceInitial = it }, label = { Text(stringResource(R.string.label_force_initial)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = Color(0xFF5C9A81),
+                            cursorColor = Color(0xFF5C9A81)
+                        ))
+                        OutlinedTextField(value = inputForceSustain, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceSustain = it }, label = { Text(stringResource(R.string.label_force_sustain)) }, modifier = Modifier.weight(1f), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = Color(0xFF5C9A81),
+                            cursorColor = Color(0xFF5C9A81)
+                        ))
                     }
                 }
                 JobType.REBA -> {
-                    Text("คะแนนส่วนลำตัว (Group A)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
-                    SooktaDropdown("ลำตัว (Trunk)", trunkOptions, rebaTrunk, { rebaTrunk = it }, expTrunk, { expTrunk = it })
+                    Text(stringResource(R.string.form_section_reba_trunk), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                    SooktaDropdown(stringResource(R.string.reba_trunk), trunkOptions, rebaTrunk, { rebaTrunk = it }, expTrunk, { expTrunk = it })
                     Spacer(Modifier.height(8.dp))
-                    SooktaDropdown("คอ (Neck)", neckOptions, rebaNeck, { rebaNeck = it }, expNeck, { expNeck = it })
+                    SooktaDropdown(stringResource(R.string.reba_neck), neckOptions, rebaNeck, { rebaNeck = it }, expNeck, { expNeck = it })
                     Spacer(Modifier.height(8.dp))
-                    SooktaDropdown("ขา (Legs)", legOptions, rebaLeg, { rebaLeg = it }, expLeg, { expLeg = it })
+                    SooktaDropdown(stringResource(R.string.reba_legs), legOptions, rebaLeg, { rebaLeg = it }, expLeg, { expLeg = it })
                     Spacer(Modifier.height(16.dp))
-                    Text("คะแนนส่วนแขน (Group B)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
-                    SooktaDropdown("ต้นแขน (Upper Arm)", upperArmOptions, rebaUpperArm, { rebaUpperArm = it }, expUpperArm, { expUpperArm = it })
+                    Text(stringResource(R.string.form_section_reba_arm), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                    SooktaDropdown(stringResource(R.string.reba_upper_arm), upperArmOptions, rebaUpperArm, { rebaUpperArm = it }, expUpperArm, { expUpperArm = it })
                     Spacer(Modifier.height(8.dp))
-                    SooktaDropdown("น้ำหนักของที่ถือ (Load)", loadScoreOptions, rebaLoad, { rebaLoad = it }, expLoad, { expLoad = it })
+                    SooktaDropdown(stringResource(R.string.reba_load), loadScoreOptions, rebaLoad, { rebaLoad = it }, expLoad, { expLoad = it })
                 }
             }
 
@@ -260,7 +334,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                 onClick = {
                     val result: ErgoResult
                     val inputData: Any
-
+                    analyticsManager.logAction("click_analyze", label = currentJobType.name)
                     if (currentJobType == JobType.REBA) {
 
                         var maxAiTrunk = 1
@@ -394,7 +468,15 @@ fun SooktaDropdown(label: String, options: List<String>, selected: String, onSel
         OutlinedTextField(
             value = selected, onValueChange = {}, readOnly = true, label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Color(0xFF5C9A81), unfocusedContainerColor = Color.White, focusedContainerColor = Color.White),
+            colors = OutlinedTextFieldDefaults.colors(
+
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                focusedBorderColor = Color(0xFF5C9A81),
+                unfocusedBorderColor = Color.LightGray
+            ),
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {

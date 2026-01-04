@@ -133,7 +133,7 @@
     <string name="setup_page_title">Personal Info</string>
     <string name="setup_header_edit">Edit Your Profile</string>
     <string name="setup_header_add">Add Your Profile</string>
-    <string name="label_name">Nickname</string>
+    <string name="label_name">Full Name</string>
     <string name="label_age">Age (Years)</string>
     <string name="label_gender">Gender</string>
     <string name="gender_male">Male</string>
@@ -149,6 +149,8 @@
     <string name="unit_year">yrs</string>
     <string name="unit_kg">kg</string>
     <string name="unit_cm">cm</string>
+    <string name="label_income">Annual Income (THB)</string>
+    <string name="note_economic_loss">* Used for economic loss estimation</string>
 
     <string name="history_title">Assessment History</string>
     <string name="history_subtitle">Your risk assessment records</string>
@@ -172,4 +174,158 @@
     <string name="error_camera_open">Cannot open camera: %1$s</string>
     <string name="permission_camera_required">Camera permission is required to take photos</string>
     <string name="avatar_select_warning">Please select an image</string>
+
+    <string name="eval_menu_reba_title">REBA Assessment</string>
+    <string name="eval_menu_reba_desc">Evaluate whole body posture risks</string>
+    <string name="eval_menu_iso_title">ISO 11228 (Lifting/Pushing)</string>
+    <string name="eval_menu_iso_desc">Assess manual handling risks</string>
+    <string name="eval_menu_snook_title">Snook Tables</string>
+    <string name="eval_menu_snook_desc">Acceptable weight and force limits</string>
+
+    <string name="profile_label_name">Name</string>
+    <string name="profile_label_age">Age</string>
+    <string name="profile_label_height">Height</string>
+    <string name="profile_label_weight">Weight</string>
+    <string name="profile_label_experience">Years of Experience</string>
+    <string name="profile_edit_button">Edit Profile</string>
+
+    <string name="home_section_recent">Recent Activities</string>
+    <string name="home_section_recommended">Recommended for You</string>
+
+
+    <string name="result_risk_level">Risk Level</string>
+
+    <string name="result_body_parts">Affected Body Parts</string>
+    <string name="result_recommendation">Recommendations</string>
+    <string name="result_economic_loss">Potential Economic Loss</string>
+    <string name="btn_save_result">Save Result</string>
+
+
+    <string name="form_section_info">Assessment Data</string>
+    <string name="form_section_advanced">Advanced Data (Optional)</string>
+    <string name="form_section_force">Measured Force (Required)</string>
+    <string name="form_section_reba_trunk">Trunk &amp; Neck (Group A)</string>
+    <string name="form_section_reba_arm">Arms &amp; Load (Group B)</string>
+
+
+    <string name="label_dist_h">Distance (H) cm</string>
+    <string name="label_dist_v">Height (V) cm</string>
+    <string name="label_force_initial">Initial Force (N)</string>
+    <string name="label_force_sustain">Sustained Force (N)</string>
+
+    <string name="reba_trunk">Trunk</string>
+    <string name="reba_neck">Neck</string>
+    <string name="reba_legs">Legs</string>
+    <string name="reba_upper_arm">Upper Arm</string>
+    <string name="reba_load">Load Weight</string>
+
+
+
+    <string name="opt_dur_1h">1 hr</string>
+    <string name="opt_dur_2h">2 hrs</string>
+    <string name="opt_dur_4h">4 hrs</string>
+    <string name="opt_dur_8h">8 hrs</string>
+
+    <string name="opt_freq_low">Low (&lt; 0.2/min)</string>
+    <string name="opt_freq_med">Medium (1–4/min)</string>
+    <string name="opt_freq_high">High (&gt; 6/min)</string>
+
+    <string name="opt_weight_5">&lt; 5 kg</string>
+    <string name="opt_weight_10">5–10 kg</string>
+    <string name="opt_weight_15">10–15 kg</string>
+    <string name="opt_weight_20">15–20 kg</string>
+    <string name="opt_weight_max">&gt; 20 kg</string>
+
+    <string name="opt_reba_trunk_1">Upright (1)</string>
+    <string name="opt_reba_trunk_2">Slight Bend (2)</string>
+    <string name="opt_reba_trunk_3">Medium Bend (3)</string>
+    <string name="opt_reba_trunk_4">Deep Bend (4)</string>
+    <string name="opt_reba_neck_1">Neck Straight (1)</string>
+    <string name="opt_reba_neck_2">Bent/Twisted (2)</string>
+
+    <string name="opt_reba_leg_1">Stable (1)</string>
+    <string name="opt_reba_leg_2">Unstable (2)</string>
+
+    <string name="opt_reba_ua_1">Normal (1)</string>
+    <string name="opt_reba_ua_2">Elevated (2)</string>
+    <string name="opt_reba_ua_3">High (3)</string>
+    <string name="opt_reba_ua_4">Very High (4)</string>
+
+    <string name="opt_reba_load_0">&lt; 5 kg (0)</string>
+    <string name="opt_reba_load_1">5–10 kg (1)</string>
+    <string name="opt_reba_load_2">&gt; 10 kg (2)</string>
+
+
+    <string name="risk_result_header">Risk Assessment Result</string>
+    <string name="risk_not_found">Assessment data not found. Please try again.</string>
+    <string name="risk_level_label">Risk Level</string>
+    <string name="loss_label">Potential Income Loss</string>
+    <string name="loss_unit_year">%1$d THB/Year</string>
+    <string name="risky_parts_header">Risky Body Parts</string>
+    <string name="no_risky_parts">No critical risks found.</string>
+    <string name="improvement_header">Improvement Plan (Selectable)</string>
+    <string name="improvement_desc">Select items below to commit for improvement.</string>
+    <string name="simulation_title">Simulation (Adjust Values)</string>
+    <string name="simulation_score_label">Simulated Score:</string>
+    <string name="btn_summarize">Summarize Improvement</string>
+
+    <string name="sugg_safe">Safe / Appropriate</string>
+    <string name="sugg_improve">Needs Improvement</string>
+    <string name="sugg_force_ok">Force is appropriate</string>
+    <string name="sugg_force_warn">Force near limit, be careful</string>
+    <string name="sugg_force_danger">Force exceeds limit, high risk</string>
+    <string name="sugg_reba_low">Low Risk: Action not necessary</string>
+    <string name="sugg_reba_med">Medium Risk: Check and change soon</string>
+    <string name="sugg_reba_high">High Risk: Change soon</string>
+    <string name="sugg_reba_vhigh">Very High Risk: Change immediately!</string>
+
+    <string name="act_reduce_weight">Reduce load weight</string>
+    <string name="act_check_wheels">Check cart wheels for friction</string>
+    <string name="act_use_legs">Use leg muscles, not back</string>
+    <string name="act_reduce_load_tool">Reduce load or use assist tools</string>
+    <string name="act_avoid_bend">Avoid deep bending or use back support</string>
+    <string name="act_adj_eye_level">Adjust work to eye level</string>
+    <string name="act_reduce_arm_raise">Reduce prolonged arm raising</string>
+    <string name="act_adj_wrist">Keep wrist in neutral position</string>
+    <string name="act_rest_stretch">Take breaks to stretch muscles</string>
+
+    <string name="act_extra_spray_strap">Adjust sprayer straps tightly</string>
+    <string name="act_extra_spray_switch">Switch shoulders to balance load</string>
+    <string name="act_extra_prune_ladder">Use stable ladder instead of reaching</string>
+    <string name="act_extra_prune_tool">Use long-handled pruning shears</string>
+    <string name="act_extra_fert_cart">Use cart instead of carrying sacks</string>
+
+    <string name="part_neck">Neck</string>
+    <string name="part_trunk">Back/Trunk</string>
+    <string name="part_legs">Legs/Knees</string>
+    <string name="part_arms">Shoulders/Arms</string>
+    <string name="part_wrists">Wrists</string>
+    <string name="risk_lvl_low">Low</string>
+    <string name="risk_lvl_med">Med</string>
+    <string name="risk_lvl_high">High</string>
+    <string name="risk_lvl_vhigh">V.High</string>
+
+    <string name="sim_weight">Load Weight (kg)</string>
+    <string name="sim_height">Lift Height (V)</string>
+    <string name="sim_force">Push Force (N)</string>
+    <string name="sim_reduce_posture">Try reducing posture score</string>
+    <string name="sim_trunk">Trunk</string>
+    <string name="sim_upper_arm">Upper Arm</string>
+
+    <string name="final_title">Saved Successfully!</string>
+    <string name="final_subtitle">Result of your improvement simulation</string>
+    <string name="risk_score_label">Risk Score (1–9)</string>
+    <string name="label_before">Before</string>
+    <string name="label_after">After</string>
+    <string name="money_saved_title">Potential Savings</string>
+    <string name="money_saved_unit">%1$d THB/Year</string>
+    <string name="money_safe">Great! No potential income loss.</string>
+    <string name="money_risk_remain">Remaining potential loss: %1$d THB/Year</string>
+    <string name="risky_point_header">Identified Risky Points</string>
+    <string name="suggestion_selected_header">Selected Improvements</string>
+    <string name="history_detail_title">Result Details</string>
+    <string name="history_date_prefix">Date: %1$s</string>
+    <string name="history_result_header">Assessment Result</string>
+    <string name="history_risky_point_header">Risky Points (History)</string>
+    <string name="history_suggestion_header">Selected Improvements</string>
 </resources>

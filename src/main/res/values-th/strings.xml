@@ -135,7 +135,7 @@
     <string name="setup_page_title">ข้อมูลส่วนตัว</string>
     <string name="setup_header_edit">แก้ไขข้อมูลของคุณ</string>
     <string name="setup_header_add">เพิ่มข้อมูลของคุณ</string>
-    <string name="label_name">ชื่อเล่น (Name)</string>
+    <string name="label_name">ชื่อ-นามสกุล</string>
     <string name="label_age">อายุ (ปี)</string>
     <string name="label_gender">เพศ</string>
     <string name="gender_male">ชาย</string>
@@ -151,6 +151,8 @@
     <string name="unit_year">ปี</string>
     <string name="unit_kg">กก.</string>
     <string name="unit_cm">ซม.</string>
+    <string name="label_income">รายได้เฉลี่ยต่อปี (บาท)</string>
+    <string name="note_economic_loss">* ใช้สำหรับการประเมินความสูญเสียทางเศรษฐกิจ</string>
 
     <string name="history_title">ผลตรวจย้อนหลัง</string>
     <string name="history_subtitle">ประวัติการประเมินความเสี่ยงของคุณ</string>
@@ -174,4 +176,157 @@
     <string name="error_camera_open">ไม่สามารถเปิดกล้องได้: %1$s</string>
     <string name="permission_camera_required">ต้องขออนุญาตใช้กล้องเพื่อถ่ายรูป</string>
     <string name="avatar_select_warning">กรุณาเลือกรูปภาพ</string>
+
+    <string name="eval_menu_reba_title">การประเมิน REBA</string>
+    <string name="eval_menu_reba_desc">ประเมินความเสี่ยงท่าทางทั้งร่างกาย</string>
+    <string name="eval_menu_iso_title">ISO 11228 (งานยก/ดัน/ดึง)</string>
+    <string name="eval_menu_iso_desc">ประเมินความเสี่ยงจากการขนย้ายของ</string>
+    <string name="eval_menu_snook_title">ตาราง Snook</string>
+    <string name="eval_menu_snook_desc">เช็กน้ำหนักและแรงที่เหมาะสม</string>
+
+    <string name="profile_label_name">ชื่อ-นามสกุล</string>
+    <string name="profile_label_age">อายุ</string>
+    <string name="profile_label_height">ส่วนสูง</string>
+    <string name="profile_label_weight">น้ำหนัก</string>
+    <string name="profile_label_experience">ประสบการณ์ทำงาน (ปี)</string>
+    <string name="profile_edit_button">แก้ไขข้อมูล</string>
+
+    <string name="home_section_recent">กิจกรรมล่าสุด</string>
+    <string name="home_section_recommended">แนะนำสำหรับคุณ</string>
+
+
+    <string name="result_risk_level">ระดับความเสี่ยง</string>
+
+    <string name="result_body_parts">จุดเสี่ยงทางร่างกาย</string>
+    <string name="result_recommendation">คำแนะนำเบื้องต้น</string>
+    <string name="result_economic_loss">ค่าใช้จ่ายที่อาจเกิดขึ้น</string>
+    <string name="btn_save_result">บันทึกผลการประเมิน</string>
+
+
+    <string name="form_section_info">ข้อมูลสำหรับการประเมิน</string>
+    <string name="form_section_advanced">ข้อมูลเชิงลึก (Optional)</string>
+    <string name="form_section_force">แรงที่วัดได้ (จำเป็น)</string>
+    <string name="form_section_reba_trunk">คะแนนส่วนลำตัว (Group A)</string>
+    <string name="form_section_reba_arm">คะแนนส่วนแขน (Group B)</string>
+
+
+    <string name="label_dist_h">ระยะห่าง (H) cm</string>
+    <string name="label_dist_v">ความสูง (V) cm</string>
+    <string name="label_force_initial">แรงเริ่ม (Initial) N</string>
+    <string name="label_force_sustain">แรงขณะเข็น (Sustain) N</string>
+
+    <string name="reba_trunk">ลำตัว (Trunk)</string>
+    <string name="reba_neck">คอ (Neck)</string>
+    <string name="reba_legs">ขา (Legs)</string>
+    <string name="reba_upper_arm">ต้นแขน (Upper Arm)</string>
+    <string name="reba_load">น้ำหนักของที่ถือ (Load)</string>
+
+
+    <string name="opt_dur_1h">1 ชม.</string>
+    <string name="opt_dur_2h">2 ชม.</string>
+    <string name="opt_dur_4h">4 ชม.</string>
+    <string name="opt_dur_8h">8 ชม.</string>
+
+    <string name="opt_freq_low">น้อย (&lt; 0.2/นาที)</string>
+    <string name="opt_freq_med">ปานกลาง (1–4/นาที)</string>
+    <string name="opt_freq_high">ถี่มาก (&gt; 6/นาที)</string>
+
+    <string name="opt_weight_5">น้อยกว่า 5 kg</string>
+    <string name="opt_weight_10">5–10 kg</string>
+    <string name="opt_weight_15">10–15 kg</string>
+    <string name="opt_weight_20">15–20 kg</string>
+    <string name="opt_weight_max">มากกว่า 20 kg</string>
+
+    <string name="opt_reba_trunk_1">ตรง/ปกติ (1)</string>
+    <string name="opt_reba_trunk_2">ก้มเล็กน้อย (2)</string>
+    <string name="opt_reba_trunk_3">ก้มปานกลาง (3)</string>
+    <string name="opt_reba_trunk_4">ก้มมาก (4)</string>
+    <string name="opt_reba_neck_1">คอตรง (1)</string>
+    <string name="opt_reba_neck_2">ก้ม/เงย (2)</string>
+
+    <string name="opt_reba_leg_1">ยืนมั่นคง (1)</string>
+    <string name="opt_reba_leg_2">ไม่มั่นคง (2)</string>
+
+    <string name="opt_reba_ua_1">ปกติ (1)</string>
+    <string name="opt_reba_ua_2">ยกเล็กน้อย (2)</string>
+    <string name="opt_reba_ua_3">ยกสูง (3)</string>
+    <string name="opt_reba_ua_4">ยกสูงมาก (4)</string>
+
+    <string name="opt_reba_load_0">&lt; 5 kg (0)</string>
+    <string name="opt_reba_load_1">5–10 kg (1)</string>
+    <string name="opt_reba_load_2">&gt; 10 kg (2)</string>
+
+
+    <string name="risk_result_header">ผลการประเมินความเสี่ยง</string>
+    <string name="risk_not_found">ไม่พบข้อมูลการประเมิน กรุณาลองใหม่อีกครั้ง</string>
+    <string name="risk_level_label">ระดับความเสี่ยง</string>
+    <string name="loss_label">อาจสูญเสียรายได้</string>
+    <string name="loss_unit_year">%1$d บ./ปี</string>
+    <string name="risky_parts_header">ตำแหน่งที่เสี่ยง</string>
+    <string name="no_risky_parts">ไม่มีจุดเสี่ยงรุนแรง</string>
+    <string name="improvement_header">แนวทางปรับปรุง (เลือกสิ่งที่ทำได้)</string>
+    <string name="improvement_desc">เลือกหัวข้อด้านล่างเพื่อยืนยันว่าจะนำไปปรับปรุง</string>
+    <string name="simulation_title">ลองปรับค่าคำนวณ (Simulation)</string>
+    <string name="simulation_score_label">คะแนนจำลอง:</string>
+    <string name="btn_summarize">สรุปผลการปรับปรุง</string>
+
+    <string name="sugg_safe">เหมาะสม</string>
+    <string name="sugg_improve">ควรปรับปรุง</string>
+    <string name="sugg_force_ok">แรงที่ใช้เหมาะสม</string>
+    <string name="sugg_force_warn">แรงใกล้ขีดจำกัด ควรระมัดระวัง</string>
+    <string name="sugg_force_danger">ใช้แรงเกินมาตรฐาน เสี่ยงบาดเจ็บ</string>
+    <string name="sugg_reba_low">ความเสี่ยงต่ำ: ไม่จำเป็นต้องแก้ไข</string>
+    <string name="sugg_reba_med">ความเสี่ยงปานกลาง: ควรตรวจสอบและแก้ไขเร็วๆ นี้</string>
+    <string name="sugg_reba_high">ความเสี่ยงสูง: จำเป็นต้องแก้ไขโดยเร็ว</string>
+    <string name="sugg_reba_vhigh">ความเสี่ยงสูงมาก: ต้องแก้ไขทันที!</string>
+
+    <string name="act_reduce_weight">ลดน้ำหนักที่ยก</string>
+    <string name="act_check_wheels">ตรวจสอบล้อรถเข็นว่าฝืดหรือไม่</string>
+    <string name="act_use_legs">ใช้แรงจากขาในการออกแรง ไม่ใช่หลัง</string>
+    <string name="act_reduce_load_tool">ลดน้ำหนักสิ่งของ หรือใช้เครื่องทุ่นแรง</string>
+    <string name="act_avoid_bend">หลีกเลี่ยงการก้มหลังมาก หรือใช้เข็มขัดพยุงหลัง</string>
+    <string name="act_adj_eye_level">ปรับงานให้อยู่ระดับสายตา ลดการก้มคอ</string>
+    <string name="act_reduce_arm_raise">ลดการยกแขนสูงเหนือไหล่เป็นเวลานาน</string>
+    <string name="act_adj_wrist">ปรับด้ามจับเครื่องมือให้ข้อมืออยู่ในแนวตรง</string>
+    <string name="act_rest_stretch">ควรพักเบรกเพื่อยืดเหยียดกล้ามเนื้อ</string>
+
+    <string name="act_extra_spray_strap">ปรับสายสะพายเครื่องพ่นยาให้กระชับ</string>
+    <string name="act_extra_spray_switch">สลับข้างสะพายถังเพื่อลดการกดทับไหล่เดียว</string>
+    <string name="act_extra_prune_ladder">ใช้บันไดที่มั่นคงแทนการเอื้อมสุดแขน</string>
+    <string name="act_extra_prune_tool">ใช้กรรไกรตัดกิ่งด้ามยาว</string>
+    <string name="act_extra_fert_cart">ใช้รถเข็นบรรทุกกระสอบปุ๋ยแทนการแบก</string>
+
+    <string name="part_neck">คอ</string>
+    <string name="part_trunk">หลัง/ลำตัว</string>
+    <string name="part_legs">ขา/เข่า</string>
+    <string name="part_arms">ไหล่/แขน</string>
+    <string name="part_wrists">ข้อมือ</string>
+    <string name="risk_lvl_low">ต่ำ</string>
+    <string name="risk_lvl_med">ปานกลาง</string>
+    <string name="risk_lvl_high">สูง</string>
+    <string name="risk_lvl_vhigh">สูงมาก</string>
+
+    <string name="sim_weight">น้ำหนักวัตถุ (kg)</string>
+    <string name="sim_height">ความสูงจุดยก (V)</string>
+    <string name="sim_force">แรงเข็น (N)</string>
+    <string name="sim_reduce_posture">ลองลดคะแนนท่าทาง</string>
+    <string name="sim_trunk">ลำตัว (Trunk)</string>
+    <string name="sim_upper_arm">แขน (Upper Arm)</string>
+
+    <string name="final_title">บันทึกและสรุปผลสำเร็จ!</string>
+    <string name="final_subtitle">ผลลัพธ์จากการจำลองการปรับปรุงของคุณ</string>
+    <string name="risk_score_label">คะแนนความเสี่ยง (1–9)</string>
+    <string name="label_before">ก่อนปรับ</string>
+    <string name="label_after">หลังปรับ</string>
+    <string name="money_saved_title">คุณลดความสูญเสียได้</string>
+    <string name="money_saved_unit">%1$d บาท/ปี</string>
+    <string name="money_safe">ยอดเยี่ยม! ไม่มีความเสี่ยงสูญเสียรายได้</string>
+    <string name="money_risk_remain">ยังมีความเสี่ยงสูญเสียรายได้ %1$d บาท/ปี</string>
+    <string name="risky_point_header">จุดเสี่ยงที่พบ</string>
+    <string name="suggestion_selected_header">แนวทางที่คุณเลือกปฏิบัติ</string>
+    <string name="history_detail_title">รายละเอียดผลตรวจ</string>
+    <string name="history_date_prefix">บันทึกเมื่อ: %1$s</string>
+    <string name="history_result_header">ผลการประเมิน</string>
+    <string name="history_risky_point_header">จุดเสี่ยงที่พบ (จากประวัติ)</string>
+    <string name="history_suggestion_header">แนวทางที่คุณเลือกไว้</string>
 </resources>

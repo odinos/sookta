@@ -84,7 +84,7 @@ fun EvaluationMenuScreen(navController: NavController) {
             Spacer(Modifier.height(16.dp))
 
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+                columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f), // [สำคัญ 1] ใส่ weight เพื่อให้ Grid ขยายเต็มพื้นที่ที่เหลือ

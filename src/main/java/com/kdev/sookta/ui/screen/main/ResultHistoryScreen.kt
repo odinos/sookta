@@ -3,6 +3,7 @@ package com.kdev.sookta.ui.screen.main
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,14 +17,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.kdev.sookta.R
 import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.data.EvaluationEntity
 import com.kdev.sookta.model.BodyPart
 import com.kdev.sookta.model.RiskLevel
+import com.kdev.sookta.ui.component.TTSButton
+import com.kdev.sookta.utils.TextToSpeechManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,7 +38,8 @@ import java.util.Locale
 fun ResultHistoryScreen(navController: NavController, historyId: Int) {
     val context = LocalContext.current
     var evaluation by remember { mutableStateOf<EvaluationEntity?>(null) }
-
+    val ttsManager = remember { TextToSpeechManager(context) }
+    DisposableEffect(Unit) { onDispose { ttsManager.shutdown() } }
     // ดึงข้อมูล
     LaunchedEffect(historyId) {
         val db = AppDatabase.getDatabase(context)
@@ -43,7 +49,7 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("รายละเอียดผลตรวจ", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.history_detail_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -60,18 +66,15 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
         } else {
             val item = evaluation!!
 
-            // แปลงคะแนนดิบกลับเป็น User Score 1-9 (ใช้ Helper)
-            val beforeScore = mapTechScoreToUserScore(item.scoreBefore)
-            val afterScore = mapTechScoreToUserScore(item.scoreAfter)
+            val beforeScore = item.scoreBefore.toInt()
+            val afterScore = item.scoreAfter.toInt()
 
             val beforeColor = getScoreColor(beforeScore)
             val afterColor = getScoreColor(afterScore)
 
-            // [NEW] ดึงค่าจริงจาก DB
-            val lossBefore = item.economicLoss // ค่าที่บันทึกไว้ตอนนั้น (Before)
-            val lossAfter = 0 // สมมติ After = 0 หรือถ้าจะเก็บ After ใน DB ก็ต้องเพิ่ม Field แต่ส่วนใหญ่ After จะเป็น 0 ถ้าแก้ได้
-            // เพื่อให้ง่าย เราใช้ค่า lossBefore เป็นตัวตั้ง ถ้า afterScore ต่ำ เราถือว่าประหยัดได้หมด
-            val moneySaved = if (afterScore <= 3) lossBefore else (lossBefore * 0.5).toInt() // Logic ประมาณการ
+            // คำนวณเงินที่ประหยัดได้ (Logic ประมาณการ)
+            val lossBefore = item.economicLoss
+            val moneySaved = if (afterScore <= 3) lossBefore else (lossBefore * 0.5).toInt()
 
             Column(
                 modifier = Modifier
@@ -82,9 +85,12 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val dateStr = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.forLanguageTag("th")).format(Date(item.dateTimestamp))
-                Text("บันทึกเมื่อ: $dateStr", fontSize = 14.sp, color = Color.Gray)
+                // แสดงวันที่ตาม Locale ของเครื่อง
+                val dateStr = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale.getDefault()).format(Date(item.dateTimestamp))
+                Text(stringResource(R.string.history_date_prefix, dateStr), fontSize = 14.sp, color = Color.Gray)
+
                 Spacer(Modifier.height(8.dp))
+                // ชื่อกิจกรรม (อาจจะเป็น Key หรือ Text ก็ได้ แต่แสดงผลไปเลย)
                 Text(item.activityName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C9A81))
 
                 Spacer(Modifier.height(24.dp))
@@ -97,16 +103,16 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("ผลการประเมิน", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.history_result_header), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(Modifier.height(20.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            RiskScoreItem(beforeScore, beforeColor, "ก่อนปรับ")
+                            RiskScoreItem(beforeScore, beforeColor, stringResource(R.string.label_before))
                             Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Color.LightGray)
-                            RiskScoreItem(afterScore, afterColor, "หลังปรับ")
+                            RiskScoreItem(afterScore, afterColor, stringResource(R.string.label_after))
                         }
 
                         // แสดงเงิน
@@ -117,7 +123,7 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.MonetizationOn, null, tint = Color(0xFFFFA000))
                                 Spacer(Modifier.width(8.dp))
-                                Text("ลดความสูญเสียได้ $moneySaved บาท/ปี", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                                Text(stringResource(R.string.money_saved_title) + " $moneySaved " + stringResource(R.string.money_saved_unit).replace("%1\$d", ""), fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                             }
                         }
                     }
@@ -126,19 +132,31 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
                 Spacer(Modifier.height(24.dp))
 
                 // --- 2. Body Map (Real Data) ---
-                // แปลง String จาก DB กลับเป็น Map
-                val bodyRisks = remember(item.bodyMapData) {
-                    parseBodyMapString(item.bodyMapData)
-                }
+                val bodyRisks = remember(item.bodyMapData) { parseBodyMapString(item.bodyMapData) }
 
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                Card(colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("จุดเสี่ยงที่พบ (จากประวัติ)", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.history_risky_point_header), fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(16.dp))
+
+                        // 1. วาด Body Map
                         BodyMapVisualization(bodyRisks = bodyRisks)
+
+                        Spacer(Modifier.height(16.dp))
+
+                        // 2. [NEW] วนลูปแสดงรายชื่ออวัยวะ (ใช้ Logic เดียวกับ FinalResult)
+                        val riskyParts = bodyRisks.filter { it.value != RiskLevel.LOW }
+                        if (riskyParts.isNotEmpty()) {
+                            riskyParts.forEach { (part, level) ->
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
+                                    Box(Modifier.size(10.dp).background(Color(level.colorHex), CircleShape))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("${getBodyPartName(part)}: ${getRiskLevelName(level)}", fontSize = 14.sp, color = Color.DarkGray)
+                                }
+                            }
+                        } else {
+                            Text(stringResource(R.string.no_risky_parts), fontSize = 12.sp, color = Color.Gray)
+                        }
                     }
                 }
 
@@ -151,14 +169,22 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("แนวทางที่คุณเลือกไว้", fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                            Text(stringResource(R.string.history_suggestion_header), fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
                             Spacer(Modifier.height(12.dp))
                             val suggestions = item.improvementNote.split(", ")
                             suggestions.forEach { note ->
-                                Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                                // แปลง Key กลับเป็น Text (ถ้า note เป็น Key)
+                                val displayNote = if (note.all { it.isDigit() }) {
+                                    try { context.getString(note.toInt()) } catch (e: Exception) { note }
+                                } else {
+                                    getResString(context, note) ?: note
+                                }
+
+                                Row(modifier = Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                                     Icon(Icons.Default.Check, null, tint = Color(0xFF2E7D32), modifier = Modifier.size(18.dp).padding(top = 2.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text(note, fontSize = 14.sp, color = Color.DarkGray)
+                                    Text(displayNote, fontSize = 14.sp, color = Color.DarkGray,modifier = Modifier.weight(1f))
+                                    TTSButton(text = displayNote, ttsManager = ttsManager, modifier = Modifier.size(32.dp))
                                 }
                             }
                         }
@@ -171,12 +197,10 @@ fun ResultHistoryScreen(navController: NavController, historyId: Int) {
 
 // --- Helper Functions ---
 
-// แปลง String ใน DB กลับเป็น Map<BodyPart, RiskLevel>
 fun parseBodyMapString(data: String?): Map<BodyPart, RiskLevel> {
     if (data.isNullOrEmpty()) return emptyMap()
     val map = mutableMapOf<BodyPart, RiskLevel>()
     try {
-        // Format: "NECK:HIGH,TRUNK:LOW"
         val pairs = data.split(",")
         for (pair in pairs) {
             val parts = pair.split(":")
@@ -200,10 +224,7 @@ fun getScoreColor(score: Int): Color {
     }
 }
 
-// Helper จำลองการแปลง Tech Score กลับเป็น User Score (1-9)
-// (ถ้าในอนาคตเก็บ User Score ลง DB เลยก็ไม่ต้องใช้ตัวนี้)
 fun mapTechScoreToUserScore(techScore: Double): Int {
-    // REBA Logic (simplified)
     return when {
         techScore <= 1 -> 1
         techScore <= 3 -> 3
@@ -212,3 +233,4 @@ fun mapTechScoreToUserScore(techScore: Double): Int {
         else -> 9
     }.coerceIn(1, 9)
 }
+

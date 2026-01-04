@@ -25,11 +25,34 @@ class TextToSpeechManager(context: Context) : TextToSpeech.OnInitListener {
             } else {
                 isReady = true
             }
+
+            val currentLocale = Locale.getDefault()
+            updateLanguage(currentLocale)
+
         } else {
             Log.e("TTS", "การเริ่มต้น TextToSpeech ล้มเหลว")
         }
     }
+    fun updateLanguage(locale: Locale) {
+        // ใช้ Locale.Builder ตามที่คุณแนะนำ เพื่อความแม่นยำ
+        val targetLocale = if (locale.language == "th") {
+            Locale.Builder().setLanguage("th").setRegion("TH").build()
+        } else {
+            Locale.US // หรือ Locale.ENGLISH
+        }
 
+        val result = tts?.setLanguage(targetLocale)
+
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.e("TTS", "ภาษา ${targetLocale.displayLanguage} ไม่รองรับในเครื่องนี้")
+            // กรณีภาษาไทยใช้ไม่ได้ ให้ Fallback เป็น US
+            if (targetLocale.language == "th") {
+                tts?.language = Locale.US
+            }
+        } else {
+            isReady = true
+        }
+    }
     fun speak(text: String) {
         if (isReady) {
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)

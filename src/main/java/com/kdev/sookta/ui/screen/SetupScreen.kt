@@ -120,11 +120,11 @@ fun SetupScreen(navController: NavController) {
             SooktaTextField(
                 value = income,
                 onChange = { income = it },
-                label = "รายได้เฉลี่ยต่อปี (บาท)", // หรือใช้ stringResource(R.string.label_income)
+                label = stringResource(R.string.label_income),
                 isNumber = true
             )
             Text(
-                text = "* ใช้สำหรับการประเมินความสูญเสียทางเศรษฐกิจ",
+                text = stringResource(R.string.note_economic_loss),
                 fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(start = 4.dp, top = 4.dp)
@@ -178,9 +178,15 @@ fun SooktaTextField(value: String, onChange: (String) -> Unit, label: String, is
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF5C9A81),
+            focusedContainerColor = Color.White,
             unfocusedContainerColor = Color.White,
-            focusedContainerColor = Color.White
+            focusedTextColor = Color.Black,      // บังคับตัวหนังสือสีดำตอนพิมพ์
+            unfocusedTextColor = Color.Black,    // บังคับตัวหนังสือสีดำตอนไม่ได้เลือก
+            focusedLabelColor = Color(0xFF5C9A81), // สี Label ตอนเลือก
+            unfocusedLabelColor = Color.Gray,
+            cursorColor = Color(0xFF5C9A81),     // สี Cursor
+            focusedBorderColor = Color(0xFF5C9A81),
+            unfocusedBorderColor = Color.LightGray
         ),
         keyboardOptions = if (isNumber) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default
     )
@@ -191,10 +197,12 @@ fun GenderOption(text: String, selected: Boolean, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) Color(0xFF8CC63F) else Color.LightGray
+            containerColor = if (selected) Color(0xFF8CC63F) else Color.LightGray,
+            contentColor = if (selected) Color.White else Color.Black
         ),
-        modifier = Modifier.width(120.dp)
+        modifier = Modifier.width(120.dp),
+        shape = RoundedCornerShape(20.dp)
     ) {
-        Text(text)
+        Text(text, fontWeight = if(selected) FontWeight.Bold else FontWeight.Normal)
     }
 }
