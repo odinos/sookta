@@ -172,9 +172,9 @@ fun ProfileScreen(navController: NavController) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 StatCard(
-                    title = "รายได้ต่อปี",
+                    title = stringResource(R.string.profile_label_income),
                     value = userPref?.incomePerYear ?: "-",
-                    unit = "บาท",
+                    unit = stringResource(R.string.profile_unit_baht),
                     modifier = Modifier.fillMaxWidth() // ให้กว้างเต็มจอหรือปรับตามความสวยงาม
                 )
             }

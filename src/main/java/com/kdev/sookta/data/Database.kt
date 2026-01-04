@@ -91,7 +91,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "sookta_database"
                 )
-                    .fallbackToDestructiveMigration(true) // อนุญาตให้ล้างข้อมูลเก่าเมื่อเปลี่ยนโครงสร้าง DB
+                    .fallbackToDestructiveMigration(false) // อนุญาตให้ล้างข้อมูลเก่าเมื่อเปลี่ยนโครงสร้าง DB
                     .build()
                 INSTANCE = instance
                 instance

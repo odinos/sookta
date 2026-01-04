@@ -36,10 +36,25 @@
     <string name="loading">กำลังโหลด…</string>
 
     <string name="contact_title">ติดต่อเรา</string>
-    <string name="contact_info">ข้อมูลการติดต่อทีมงาน Sookta…</string>
-
+    <string name="contact_subtitle">หากมีข้อสงสัยหรือข้อเสนอแนะ สามารถติดต่อได้ที่</string>
+    <string name="contact_team_label">ผู้รับผิดชอบโครงการ</string>
+    <string name="contact_team_name">ทีมวิจัยระดับปริญญาเอก</string>
+    <string name="contact_university">มหาวิทยาลัยธรรมศาสตร์</string>
+    <string name="contact_faculty">คณะสาธารณสุขศาสตร์</string>
+    <string name="contact_label_email">อีเมล</string>
+    <string name="contact_label_phone">เบอร์โทรศัพท์</string>
+    <string name="contact_email_value">support@sookta.com</string>
+    <string name="contact_phone_value">02-xxx-xxxx</string>
+    <string name="app_version">เวอร์ชัน %1$s</string>
     <string name="help_title">ความช่วยเหลือ</string>
-    <string name="help_info">คำแนะนำการใช้งานแอพพลิเคชัน…</string>
+    <string name="help_subtitle">คำแนะนำการใช้งาน</string>
+    <string-array name="help_list_data">
+        <item>1. วิธีเริ่มประเมินความเสี่ยง|ไปที่หน้าแรก กดปุ่ม "เริ่มทำแบบประเมิน" แล้วเลือกกิจกรรมเกษตรที่คุณต้องการตรวจสอบ (เช่น การใส่ปุ๋ย, การเก็บเกี่ยว)</item>
+        <item>2. การถ่ายภาพเพื่อวิเคราะห์|ควรถ่ายภาพด้านข้างลำตัวขณะทำงาน ให้เห็นศีรษะ หลัง แขน และขาชัดเจน เพื่อให้ AI ประเมินท่าทางได้แม่นยำที่สุด</item>
+        <item>3. การกรอกข้อมูล|ระบุน้ำหนักสิ่งของที่ยก (กิโลกรัม), ความถี่ในการยก, และระยะเวลาทำงานต่อวันตามความเป็นจริง</item>
+        <item>4. การอ่านผลลัพธ์|- สีเขียว: ความเสี่ยงต่ำ (ทำงานต่อได้)\n- สีเหลือง: ความเสี่ยงปานกลาง (ควรเริ่มปรับปรุง)\n- สีแดง: ความเสี่ยงสูง (อันตราย! ต้องแก้ไขทันที)</item>
+        <item>5. การดูประวัติ|คุณสามารถดูผลการประเมินย้อนหลังและจำนวนเงินที่ช่วยประหยัดได้ที่เมนู "ผลตรวจ"</item>
+    </string-array>
 
     <string name="result_success">การปรับปรุงเสร็จสมบูรณ์!</string>
     <string name="result_after">หลังปรับปรุง</string>
@@ -81,7 +96,7 @@
     <string name="btn_back_home">กลับสู่หน้าหลัก</string>
 
     <string name="terms_title">ข้อกำหนดและเงื่อนไข</string>
-    <string name="terms_content">รายละเอียดข้อกำหนดและเงื่อนไข…</string>
+
 
     <string name="home_hello">สวัสดี,</string>
     <string name="home_user_mock">ผู้ใช้งาน</string>
@@ -153,10 +168,11 @@
     <string name="unit_cm">ซม.</string>
     <string name="label_income">รายได้เฉลี่ยต่อปี (บาท)</string>
     <string name="note_economic_loss">* ใช้สำหรับการประเมินความสูญเสียทางเศรษฐกิจ</string>
-
+    <string name="profile_label_income">รายได้เฉลี่ย/ปี</string>
+    <string name="profile_label_bmi">ค่า BMI</string>
     <string name="history_title">ผลตรวจย้อนหลัง</string>
     <string name="history_subtitle">ประวัติการประเมินความเสี่ยงของคุณ</string>
-
+    <string name="profile_unit_baht">บาท</string>
     <string name="initial_risk_title">ผลการประเมินเบื้องต้น</string>
     <string name="label_activity_format">กิจกรรม: %1$s</string>
 
@@ -329,4 +345,12 @@
     <string name="history_result_header">ผลการประเมิน</string>
     <string name="history_risky_point_header">จุดเสี่ยงที่พบ (จากประวัติ)</string>
     <string name="history_suggestion_header">แนวทางที่คุณเลือกไว้</string>
+    <string name="terms_read_instruction">กรุณาอ่านและยอมรับเงื่อนไข</string>
+    <string-array name="terms_list_data">
+        <item>1. บทนำ|ยินดีต้อนรับสู่แอปพลิเคชัน "สุขท่า" (Sookta) การใช้งานแอปพลิเคชันนี้ ถือว่าท่านยอมรับข้อกำหนดและเงื่อนไขเหล่านี้ทุกประการ</item>
+        <item>2. วัตถุประสงค์|แอปพลิเคชันนี้ใช้เพื่อประเมินความเสี่ยงทางการยศาสตร์เบื้องต้นสำหรับเกษตรกร โดยอ้างอิงมาตรฐานสากล (REBA, ISO 11228) เพื่อให้คำแนะนำในการทำงานที่ปลอดภัยขึ้น</item>
+        <item>3. ข้อควรระวัง|ผลการประเมินเป็นเพียง "คำแนะนำเบื้องต้น" เท่านั้น ไม่ใช่การวินิจฉัยทางการแพทย์ หากท่านมีอาการปวดเรื้อรัง ควรปรึกษาแพทย์โดยตรง ผู้พัฒนาไม่รับผิดชอบต่อความเสียหายหรืออาการบาดเจ็บใดๆ ที่อาจเกิดขึ้น</item>
+        <item>4. ข้อมูลส่วนบุคคล|ระบบจะบันทึกข้อมูลส่วนตัว (อายุ, น้ำหนัก, ส่วนสูง, รายได้) ลงในอุปกรณ์ของท่านเพื่อใช้คำนวณผลลัพธ์ และอาจมีการส่งข้อมูลการใช้งานแบบไม่ระบุตัวตนไปยัง Google Analytics เพื่อปรับปรุงระบบ</item>
+        <item>5. ลิขสิทธิ์|เนื้อหาและองค์ประกอบของแอปพลิเคชันเป็นลิขสิทธิ์ของผู้พัฒนาโครงการ ห้ามคัดลอกหรือดัดแปลงโดยไม่ได้รับอนุญาต</item>
+    </string-array>
 </resources>

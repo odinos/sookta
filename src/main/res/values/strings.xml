@@ -35,10 +35,25 @@
     <string name="loading">Loading…</string>
 
     <string name="contact_title">Contact Us</string>
-    <string name="contact_info">Contact information for Sookta team…</string>
-
+    <string name="contact_subtitle">If you have any questions or suggestions, please contact</string>
+    <string name="contact_team_label">Project Owner</string>
+    <string name="contact_team_name">PhD Research Team</string>
+    <string name="contact_university">Thammasat University</string>
+    <string name="contact_faculty">Faculty of Public Health</string>
+    <string name="contact_label_email">Email</string>
+    <string name="contact_label_phone">Phone</string>
+    <string name="contact_email_value">support@sookta.com</string>
+    <string name="contact_phone_value">02-xxx-xxxx</string>
+    <string name="app_version">Version %1$s</string>
     <string name="help_title">Help</string>
-    <string name="help_info">Instructions for using the application…</string>
+    <string name="help_subtitle">Usage Guide</string>
+    <string-array name="help_list_data">
+        <item>1. How to start|Go to Home, tap "Start Evaluation", and select your farming activity.</item>
+        <item>2. Taking photos|Take a side-view photo ensuring head, back, arms, and legs are visible for accurate AI analysis.</item>
+        <item>3. Entering data|Input the actual weight (kg), frequency, and duration of the task.</item>
+        <item>4. Interpreting results|- Green: Low Risk\n- Yellow: Medium Risk (Improvement needed)\n- Red: High Risk (Immediate action required)</item>
+        <item>5. History|View past results and economic savings in the "History" menu.</item>
+    </string-array>
 
     <string name="result_success">Improvement Complete!</string>
     <string name="result_after">After Improvement</string>
@@ -79,7 +94,7 @@
     <string name="btn_back_home">Back to Home</string>
 
     <string name="terms_title">Terms and Conditions</string>
-    <string name="terms_content">Details of terms and conditions…</string>
+
 
     <string name="home_hello">Hello,</string>
     <string name="home_user_mock">Guest</string>
@@ -151,7 +166,9 @@
     <string name="unit_cm">cm</string>
     <string name="label_income">Annual Income (THB)</string>
     <string name="note_economic_loss">* Used for economic loss estimation</string>
-
+    <string name="profile_label_income">Annual Income</string>
+    <string name="profile_label_bmi">BMI</string>
+    <string name="profile_unit_baht">THB</string>
     <string name="history_title">Assessment History</string>
     <string name="history_subtitle">Your risk assessment records</string>
 
@@ -328,4 +345,12 @@
     <string name="history_result_header">Assessment Result</string>
     <string name="history_risky_point_header">Risky Points (History)</string>
     <string name="history_suggestion_header">Selected Improvements</string>
+    <string name="terms_read_instruction">Please read and accept the terms</string>
+    <string-array name="terms_list_data">
+        <item>1. Introduction|Welcome to "Sookta". By using this app, you agree to these terms and conditions.</item>
+        <item>2. Purpose|This app assesses ergonomic risks for farmers based on international standards (REBA, ISO 11228) to provide safety recommendations.</item>
+        <item>3. Disclaimer|Results are "preliminary recommendations" only, not medical diagnoses. Please consult a doctor for chronic pain. The developer is not liable for any injuries.</item>
+        <item>4. Privacy Policy|Personal data (age, weight, income) is stored locally for calculation. Anonymous usage data may be sent to Google Analytics for improvements.</item>
+        <item>5. Copyright|All content is the property of the developer. Reproduction without permission is prohibited.</item>
+    </string-array>
 </resources>
