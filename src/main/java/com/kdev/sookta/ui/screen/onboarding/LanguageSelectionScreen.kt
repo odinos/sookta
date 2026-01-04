@@ -203,7 +203,7 @@ suspend fun saveLanguageAndNavigate(
         } else {
             // --- กรณีติดตั้งใหม่ (First Run) ---
             try {
-                dao.insertPreference(UserPreference(id = 1, language = langDB))
+                dao.insertOrUpdate(UserPreference(id = 1, language = langDB))
             } catch (e: Exception) {
                 dao.updateLanguage(langDB)
             }

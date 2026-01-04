@@ -29,7 +29,10 @@ import com.kdev.sookta.ui.screen.onboarding.SplashScreen
 import com.kdev.sookta.ui.theme.SooktaTheme
 
 import android.content.Context
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.kdev.sookta.ui.screen.main.HistoryScreen
+import com.kdev.sookta.ui.screen.main.ResultHistoryScreen
 import com.kdev.sookta.utils.LocaleHelper
 
 class MainActivity : ComponentActivity() {
@@ -91,16 +94,28 @@ fun AppNavigation() {
 
             InitialRiskScreen(navController, activityName, score)
         }
-        composable("final_result/{oldScore}/{newScore}") { backStackEntry ->
-            val oldScoreString = backStackEntry.arguments?.getString("oldScore")
-            val newScoreString = backStackEntry.arguments?.getString("newScore")
+        composable(
+            route = "final_result/{oldScore}/{newScore}/{activityName}",
+            arguments = listOf(
+                navArgument("oldScore") { type = NavType.IntType },
+                navArgument("newScore") { type = NavType.IntType },
+                navArgument("activityName") { type = NavType.StringType } // เพิ่ม type String
+            )
+        ) { backStackEntry ->
+            val oldScore = backStackEntry.arguments?.getInt("oldScore") ?: 0
+            val newScore = backStackEntry.arguments?.getInt("newScore") ?: 0
+            // รับค่า activityName
+            val activityName = backStackEntry.arguments?.getString("activityName") ?: ""
 
-            val oldScore = oldScoreString?.toDoubleOrNull()?.toInt() ?: 0
-            val newScore = newScoreString?.toDoubleOrNull()?.toInt() ?: 0
-
-            FinalResultScreen(navController, oldScore, newScore)
+            FinalResultScreen(navController, oldScore, newScore, activityName)
         }
 
-
+        composable(
+            route = "result_history/{historyId}",
+            arguments = listOf(navArgument("historyId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("historyId") ?: 0
+            ResultHistoryScreen(navController, id)
+        }
     }
 }

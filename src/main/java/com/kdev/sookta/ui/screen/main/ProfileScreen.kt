@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Language
@@ -216,7 +217,15 @@ fun ProfileScreen(navController: NavController) {
                     text = stringResource(R.string.menu_contact),
                     onClick = { navController.navigate("contact") }
                 )
-
+                // 6. ออกจากระบบ (Exit App)
+                ProfileMenuItem(
+                    icon = Icons.Default.Close, // ใช้ไอคอนกากบาท
+                    text = stringResource(R.string.logout), // "ออกจากระบบ"
+                    onClick = {
+                        // ปิด Activity ปัจจุบันเพื่อออกจากแอป
+                        (context as? android.app.Activity)?.finish()
+                    }
+                )
                 Spacer(Modifier.height(40.dp))
             }
         }

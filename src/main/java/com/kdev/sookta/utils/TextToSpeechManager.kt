@@ -16,7 +16,7 @@ class TextToSpeechManager(context: Context) : TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             // ตั้งค่าภาษาไทย
-            val result = tts?.setLanguage(Locale("th", "TH"))
+            val result = tts?.setLanguage(Locale.Builder().setLanguage("th").setRegion("TH").build())
 
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TTS", "ภาษาไทยไม่รองรับในเครื่องนี้ หรือยังไม่ได้ติดตั้งข้อมูลเสียง")

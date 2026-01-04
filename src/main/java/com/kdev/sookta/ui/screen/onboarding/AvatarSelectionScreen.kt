@@ -233,7 +233,7 @@ fun AvatarSelectionScreen(navController: NavController) {
         }
 
         Spacer(Modifier.height(24.dp))
-        Divider()
+        HorizontalDivider()
         Spacer(Modifier.height(16.dp))
 
         // --- Grid เลือก Avatar การ์ตูน ---

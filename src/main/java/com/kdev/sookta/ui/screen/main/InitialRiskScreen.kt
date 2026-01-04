@@ -166,7 +166,11 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
         }
 
         Spacer(Modifier.height(24.dp))
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp), // อาจเพิ่ม padding ถ้าต้องการ
+            thickness = 1.dp,
+            color = Color.LightGray.copy(alpha = 0.5f)
+        )
         Spacer(Modifier.height(24.dp))
 
         // --- ส่วนที่ 2: Checklist คำแนะนำ ---
@@ -256,7 +260,7 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
 
                 val oldScoreStr = initialResult.userScore.toString()
                 val newScoreStr = finalResult.userScore.toString()
-                navController.navigate("final_result/$oldScoreStr/$newScoreStr")
+                navController.navigate("final_result/$oldScoreStr/$newScoreStr/$activityNameArg")
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))

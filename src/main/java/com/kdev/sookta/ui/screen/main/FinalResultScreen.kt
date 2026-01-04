@@ -20,22 +20,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.data.EvaluationEntity
+import com.kdev.sookta.model.BodyPart
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.RiskLevel
 import kotlinx.coroutines.launch
 
 @Composable
-fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreArg: Int) {
+fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreArg: Int, activityNameArg: String) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val db = remember { AppDatabase.getDatabase(context) }
-
+    // แปลงชื่อกิจกรรม (เผื่อกรณีส่งมาเป็น ID)
+    val displayActivityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
     // 1. ดึงข้อมูล
     val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
     val initialResult = savedStateHandle?.get<ErgoResult>("initialResult")
@@ -48,22 +50,29 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
     var isSaved by rememberSaveable { mutableStateOf(false) }
 
-    // [ส่วนสำคัญ] บันทึกลง Database
+    // [ส่วนสำคัญ] บันทึกลง Database พร้อมข้อมูลใหม่
     LaunchedEffect(Unit) {
         if (!isSaved && initialResult != null && finalResult != null) {
+
+            // แปลง Map BodyPart เป็น String เพื่อเก็บใน DB (Format: "NECK:HIGH,TRUNK:LOW")
+            val bodyMapString = initialResult.bodyPartRisks.entries.joinToString(",") { "${it.key.name}:${it.value.name}" }
+
             val entity = EvaluationEntity(
-                activityName = "การประเมินความเสี่ยง", // หรือส่งชื่อกิจกรรมมาทาง savedStateHandle ก็ได้ถ้าต้องการระบุเจาะจง
+                activityName = displayActivityName, // แนะนำให้ส่งชื่อกิจกรรมจริงมาด้วยจะดีมาก
                 dateTimestamp = System.currentTimeMillis(),
-                scoreBefore = initialResult.techScore, // เก็บ Tech Score (1-15) หรือจะเก็บ User Score ก็ได้
-                riskBefore = initialResult.riskLevel.name, // "HIGH", "MEDIUM"
+                scoreBefore = initialResult.techScore,
+                riskBefore = initialResult.riskLevel.name,
                 scoreAfter = finalResult.techScore,
                 riskAfter = finalResult.riskLevel.name,
-                improvementNote = selectedSuggestions.joinToString(", ") // บันทึกคำแนะนำที่เลือกรวมเป็น String เดียว
+                improvementNote = selectedSuggestions.joinToString(", "),
+
+                // [NEW] บันทึก Economic Loss และ Body Map
+                economicLoss = initialResult.economicLoss,
+                bodyMapData = bodyMapString
             )
 
-            // เรียก DAO เพื่อ Insert
             db.evaluationDao().insertEvaluation(entity)
-            isSaved = true // mark ว่าบันทึกแล้ว
+            isSaved = true
         }
     }
 
@@ -153,10 +162,26 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
         Spacer(Modifier.height(24.dp))
 
-        // --- [เพิ่มใหม่] ส่วนแสดงคำแนะนำที่เลือก ---
+        // [เพิ่ม] แสดง Body Map ในหน้า Final ด้วย เพื่อให้ครบตาม Requirement
+        Card(
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("จุดเสี่ยงที่พบ", fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(16.dp))
+                if (initialResult != null) {
+                    BodyMapVisualization(bodyRisks = initialResult.bodyPartRisks)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // --- ส่วนแสดงคำแนะนำที่เลือก ---
         if (selectedSuggestions.isNotEmpty()) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)), // เขียวอ่อน
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -216,6 +241,7 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
     }
 }
 
+// Reuse Composable
 @Composable
 fun RiskScoreItem(score: Int, color: Color, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
