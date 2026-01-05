@@ -37,13 +37,13 @@
     <string name="contact_title">Contact Us</string>
     <string name="contact_subtitle">If you have any questions or suggestions, please contact</string>
     <string name="contact_team_label">Project Owner</string>
-    <string name="contact_team_name">PhD Research Team</string>
+    <string name="contact_team_name">นางอภิสรา เลา</string>
     <string name="contact_university">Thammasat University</string>
     <string name="contact_faculty">Faculty of Public Health</string>
     <string name="contact_label_email">Email</string>
     <string name="contact_label_phone">Phone</string>
-    <string name="contact_email_value">support@sookta.com</string>
-    <string name="contact_phone_value">02-xxx-xxxx</string>
+    <string name="contact_email_value">apisara.chaisi@dome.tu.ac.th</string>
+    <string name="contact_phone_value">0985162941</string>
     <string name="app_version">Version %1$s</string>
     <string name="help_title">Help</string>
     <string name="help_subtitle">Usage Guide</string>

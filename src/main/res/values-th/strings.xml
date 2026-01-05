@@ -38,13 +38,13 @@
     <string name="contact_title">ติดต่อเรา</string>
     <string name="contact_subtitle">หากมีข้อสงสัยหรือข้อเสนอแนะ สามารถติดต่อได้ที่</string>
     <string name="contact_team_label">ผู้รับผิดชอบโครงการ</string>
-    <string name="contact_team_name">ทีมวิจัยระดับปริญญาเอก</string>
+    <string name="contact_team_name">นางอภิสรา เลา</string>
     <string name="contact_university">มหาวิทยาลัยธรรมศาสตร์</string>
     <string name="contact_faculty">คณะสาธารณสุขศาสตร์</string>
     <string name="contact_label_email">อีเมล</string>
     <string name="contact_label_phone">เบอร์โทรศัพท์</string>
-    <string name="contact_email_value">support@sookta.com</string>
-    <string name="contact_phone_value">02-xxx-xxxx</string>
+    <string name="contact_email_value">apisara.chaisi@dome.tu.ac.th</string>
+    <string name="contact_phone_value">0985162941</string>
     <string name="app_version">เวอร์ชัน %1$s</string>
     <string name="help_title">ความช่วยเหลือ</string>
     <string name="help_subtitle">คำแนะนำการใช้งาน</string>

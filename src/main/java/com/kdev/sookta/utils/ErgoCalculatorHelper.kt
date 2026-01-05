@@ -1,12 +1,16 @@
 package com.kdev.sookta.utils
 
-import com.kdev.sookta.R
+import com.kdev.sookta.ml.PoseLandmark
 import com.kdev.sookta.model.BodyPart
+import com.kdev.sookta.ml.Person
+import android.graphics.PointF
+import com.kdev.sookta.R
 import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.RebaInputData
 import com.kdev.sookta.model.RiskLevel
 import kotlin.math.abs
+import kotlin.math.atan2
 
 object ErgoCalculatorHelper {
 
@@ -17,7 +21,96 @@ object ErgoCalculatorHelper {
     private const val REF_MASS_MALE = 25.0
     private const val REF_MASS_FEMALE = 20.0
 
-    // --- ส่วนที่ 1: ISO 11228-1 (Lifting) ---
+    // --- Constants สำหรับการคำนวณความสูญเสียทางเศรษฐกิจ ---
+    private const val THAI_MIN_WAGE = 350.0 // ค่าแรงขั้นต่ำโดยเฉลี่ย
+
+    // ค่ารักษาพยาบาลโดยประมาณ (ค่ายา/นวด/หาหมอ/เดินทาง)
+    private const val MED_COST_MEDIUM = 300.0
+    private const val MED_COST_HIGH = 1500.0
+    private const val MED_COST_VHIGH = 5000.0
+
+    // จำนวนวันที่คาดว่าจะเสียโอกาสในการทำงาน (หยุดงาน)
+    private const val LOST_DAYS_MEDIUM = 2.0
+    private const val LOST_DAYS_HIGH = 7.0
+    private const val LOST_DAYS_VHIGH = 30.0
+
+    // ==========================================
+    // ส่วนที่ เพิ่มเติม: AI AUTO-FILL LOGIC
+    // ==========================================
+
+    fun calculateRebaInputFromPose(person: Person, currentData: RebaInputData): RebaInputData {
+        // Helper to get point
+        fun p(bp: PoseLandmark): PointF? = person.keyPoints.find { it.bodyPart == bp && it.score > 0.3f }?.coordinate
+
+        val ear = p(PoseLandmark.RIGHT_EAR) ?: p(PoseLandmark.LEFT_EAR)
+        val shoulder = p(PoseLandmark.RIGHT_SHOULDER) ?: p(PoseLandmark.LEFT_SHOULDER)
+        val hip = p(PoseLandmark.RIGHT_HIP) ?: p(PoseLandmark.LEFT_HIP)
+        val knee = p(PoseLandmark.RIGHT_KNEE) ?: p(PoseLandmark.LEFT_KNEE)
+        val elbow = p(PoseLandmark.RIGHT_ELBOW) ?: p(PoseLandmark.LEFT_ELBOW)
+        val wrist = p(PoseLandmark.RIGHT_WRIST) ?: p(PoseLandmark.LEFT_WRIST)
+        val ankle = p(PoseLandmark.RIGHT_ANKLE) ?: p(PoseLandmark.LEFT_ANKLE)
+
+        var newTrunk = currentData.trunkScore
+        var newNeck = currentData.neckScore
+        var newUpperArm = currentData.upperArmScore
+        var newLowerArm = currentData.lowerArmScore
+        var newLeg = currentData.legScore
+
+        // Trunk (หลัง)
+        if (shoulder != null && hip != null) {
+            val angle = getVerticalAngle(hip, shoulder)
+            newTrunk = when {
+                angle <= 5 -> 1       // ยืนตรง
+                angle <= 20 -> 2      // ก้มเล็กน้อย
+                angle <= 60 -> 3      // ก้มปานกลาง
+                else -> 4             // ก้มมาก
+            }
+        }
+
+        // Neck (คอ)
+        if (ear != null && shoulder != null) {
+            val angle = getVerticalAngle(shoulder, ear)
+            newNeck = if (angle <= 20) 1 else 2
+        }
+
+        // Upper Arm (ต้นแขน)
+        if (shoulder != null && elbow != null) {
+            val angle = getVerticalAngle(shoulder, elbow)
+            newUpperArm = when {
+                angle <= 20 -> 1
+                angle <= 45 -> 2
+                angle <= 90 -> 3
+                else -> 4
+            }
+        }
+
+        // Lower Arm (แขนท่อนล่าง)
+        if (shoulder != null && elbow != null && wrist != null) {
+            val angle = getThreePointAngle(shoulder, elbow, wrist)
+            // มุมปกติควรอยู่ช่วง 60-100
+            newLowerArm = if (angle in 60.0..100.0) 1 else 2
+        }
+
+        // Legs (ขา) - ตรวจสอบการงอเข่า
+        if (hip != null && knee != null && ankle != null) {
+            val kneeAngle = getThreePointAngle(hip, knee, ankle)
+            // ถ้ายืนตรง มุมเข่าประมาณ 180, ถ้าย่อเข่า มุมจะลดลง
+            newLeg = if (kneeAngle < 150) 2 else 1
+        }
+
+        return currentData.copy(
+            trunkScore = newTrunk,
+            neckScore = newNeck,
+            upperArmScore = newUpperArm,
+            lowerArmScore = newLowerArm,
+            legScore = newLeg
+        )
+    }
+
+
+    // ==========================================
+    // ส่วนที่ 1: ISO 11228-1 (Lifting) - ปรับปรุงเพิ่ม Distance
+    // ==========================================
     fun calculateLiftingRisk(data: ErgoInputData): ErgoResult {
         val isFemale = data.gender.lowercase() == "female"
         val refMass = if (isFemale) REF_MASS_FEMALE else REF_MASS_MALE
@@ -25,6 +118,7 @@ object ErgoCalculatorHelper {
         val h = data.horizontalDist.coerceAtLeast(25.0)
         val hm = 25.0 / h
         val vm = (1.0 - (0.003 * abs(data.verticalHeight - 75.0))).coerceIn(0.0, 1.0)
+
         val fm = when {
             data.liftFrequency <= 0.2 -> 1.0
             data.liftFrequency <= 1.0 -> 0.94
@@ -33,28 +127,32 @@ object ErgoCalculatorHelper {
             else -> 0.0
         }
 
-        val rwl = refMass * vm * hm * fm
+        // **เพิ่ม: Distance Multiplier (DM)**
+        // ลดทอนน้ำหนักที่ยกได้ลง หากต้องเดินแบกไกล
+        val dm = when {
+            data.transportDistance <= 2.0 -> 1.0   // ระยะใกล้ ไม่กระทบ
+            data.transportDistance <= 10.0 -> 0.85 // เริ่มลดทอน
+            data.transportDistance <= 20.0 -> 0.75
+            else -> 0.6                            // ไกลมาก ลดทอนเยอะ
+        }
+
+        // เพิ่ม DM เข้าไปในสูตร RWL
+        val rwl = refMass * vm * hm * fm * dm
+
         val li = if (rwl > 0) data.loadWeight / rwl else 99.0
 
         val userScore = mapLiToUserScore(li)
         val risk = mapLiToRiskLevel(li)
 
-        // Return Resource ID
         val suggestionRes = if(risk == RiskLevel.LOW) R.string.sugg_safe else R.string.sugg_improve
 
-        // Return List of Resource IDs (Strings representing keys) or plain strings if dynamic?
-        // เพื่อความง่ายและรองรับ Serializable: เราจะเก็บเป็น List<String> ที่เป็น KEY ของ Resource
-        // แล้วให้ UI ไป map เอาเอง หรือเก็บเป็น StringRes ID แต่ ErgoResult ต้องแก้ Model
-        // **วิธีที่ง่ายที่สุด:** ส่ง Key String (เช่น "act_reduce_weight") ไป แล้วให้ UI ใช้ getIdentifier หรือ Map
-        // แต่เพื่อความ Clean จะขอแก้ให้ ErgoResult เก็บ List<Int> (ResId) แทน String ไปเลยจะดีที่สุด
-        // **แต่ถ้าแก้ Model ไม่ได้:** ให้ส่ง String ที่เป็น "PREFIX_RES_ID:xxx"
-
-        // *สมมติว่า ErgoResult.suggestionList เป็น List<String> ตามเดิม*
-        // ผมจะส่ง String ที่เป็น Resource Name ไปแทน แล้วให้ UI Helper แปลง
         val suggestionList = mutableListOf<String>()
-        if(risk >= RiskLevel.MEDIUM) suggestionList.add("act_reduce_weight") // Key
+        if(risk >= RiskLevel.MEDIUM) suggestionList.add("act_reduce_weight")
 
-        val bodyRisks = mapOf(BodyPart.TRUNK to risk)
+        // เพิ่มคำแนะนำเรื่องระยะทาง
+        if (data.transportDistance > 10.0) suggestionList.add("act_use_cart_distance")
+
+        val bodyRisks = mapOf(com.kdev.sookta.model.BodyPart.TRUNK to risk)
 
         return ErgoResult(
             riskLevel = risk,
@@ -62,14 +160,17 @@ object ErgoCalculatorHelper {
             userScore = userScore,
             userScoreColor = getColorForScore(userScore),
             limitValue = rwl,
-            suggestion = suggestionRes.toString(), // เก็บ ResID เป็น String ชั่วคราว
-            economicLoss = calculateEconomicLoss(risk, data.dailyIncome),
+            suggestion = suggestionRes.toString(),
+            economicLoss = calculateHybridEconomicLoss(risk, data.dailyIncome),
             suggestionList = suggestionList,
             bodyPartRisks = bodyRisks
         )
     }
 
-    // --- ส่วนที่ 2: Push/Pull ---
+
+    // ==========================================
+    // ส่วนที่ 2: Push/Pull
+    // ==========================================
     fun calculatePushPullRisk(data: ErgoInputData): ErgoResult {
         val (limitInitial, limitSustain) = if (data.gender.lowercase() == "female") Pair(20.0, 12.0) else Pair(25.0, 15.0)
         val ratioInitial = data.initialForce / limitInitial
@@ -100,13 +201,15 @@ object ErgoCalculatorHelper {
             userScoreColor = getColorForScore(userScore),
             limitValue = limitInitial,
             suggestion = suggestionRes.toString(),
-            economicLoss = calculateEconomicLoss(risk, data.dailyIncome),
+            economicLoss = calculateHybridEconomicLoss(risk, data.dailyIncome),
             suggestionList = suggestionList,
             bodyPartRisks = bodyRisks
         )
     }
 
-    // --- ส่วนที่ 3: REBA ---
+    // ==========================================
+    // ส่วนที่ 3: REBA
+    // ==========================================
     fun calculateRebaRisk(input: RebaInputData): ErgoResult {
         val scoreTableA = getRebaTableAScore(input.trunkScore, input.neckScore, input.legScore)
         val scoreA = scoreTableA + input.loadScore
@@ -148,7 +251,7 @@ object ErgoCalculatorHelper {
             userScoreColor = getColorForScore(userScore),
             limitValue = 15.0,
             suggestion = suggestionRes.toString(), // เก็บ ResID string
-            economicLoss = calculateEconomicLoss(risk, input.dailyIncome),
+            economicLoss = calculateHybridEconomicLoss(risk, input.dailyIncome),
             suggestionList = suggestionList,
             bodyPartRisks = bodyRisks
         )
@@ -176,11 +279,31 @@ object ErgoCalculatorHelper {
         return USER_SCORE_COLORS[(score - 1).coerceIn(0, 8)]
     }
 
-    private fun calculateEconomicLoss(risk: RiskLevel, dailyIncome: Double): Int {
+    /**
+     * [New Feature] คำนวณความสูญเสียแบบผสมผสาน (Hybrid Loss Model)
+     * = (ค่าเสียโอกาสจากการหยุดงาน) + (ค่ารักษาพยาบาลโดยประมาณ)
+     */
+    private fun calculateHybridEconomicLoss(risk: RiskLevel, dailyIncome: Double): Int {
+        // ถ้าผู้ใช้ไม่กรอกรายได้ หรือกรอกมาเป็น 0 ให้ใช้ค่าแรงขั้นต่ำ (350 บาท) เป็นฐาน
+        val incomeBase = if (dailyIncome > 0) dailyIncome else THAI_MIN_WAGE
+
         return when (risk) {
-            RiskLevel.VERY_HIGH, RiskLevel.HIGH -> (dailyIncome * 24).toInt()
-            RiskLevel.MEDIUM -> (dailyIncome * 4).toInt()
-            else -> 0
+            RiskLevel.VERY_HIGH -> {
+                val lostOpportunity = incomeBase * LOST_DAYS_VHIGH // หยุดงาน 30 วัน
+                val medicalCost = MED_COST_VHIGH // ค่ารักษา 5000
+                (lostOpportunity + medicalCost).toInt()
+            }
+            RiskLevel.HIGH -> {
+                val lostOpportunity = incomeBase * LOST_DAYS_HIGH // หยุดงาน 7 วัน
+                val medicalCost = MED_COST_HIGH // ค่ารักษา 1500
+                (lostOpportunity + medicalCost).toInt()
+            }
+            RiskLevel.MEDIUM -> {
+                val lostOpportunity = incomeBase * LOST_DAYS_MEDIUM // หยุดงาน 2 วัน
+                val medicalCost = MED_COST_MEDIUM // ค่ารักษา 300
+                (lostOpportunity + medicalCost).toInt()
+            }
+            else -> 0 // ความเสี่ยงต่ำ ไม่มีความสูญเสีย
         }
     }
 
@@ -213,5 +336,21 @@ object ErgoCalculatorHelper {
         var c = maxScore
         if (minScore >= 6) c += 1
         return c.coerceAtMost(12)
+    }
+
+    // Geometry Helpers for AI
+    private fun getVerticalAngle(p1: PointF, p2: PointF): Double {
+        val dx = p2.x - p1.x
+        val dy = p1.y - p2.y
+        return Math.toDegrees(atan2(abs(dx), abs(dy)).toDouble())
+    }
+
+    private fun getThreePointAngle(p1: PointF, p2: PointF, p3: PointF): Double {
+        val a1 = atan2((p1.y - p2.y).toDouble(), (p1.x - p2.x).toDouble())
+        val a2 = atan2((p3.y - p2.y).toDouble(), (p3.x - p2.x).toDouble())
+        var angle = Math.toDegrees(a1 - a2)
+        if (angle < 0) angle += 360.0
+        if (angle > 180) angle = 360.0 - angle
+        return angle
     }
 }

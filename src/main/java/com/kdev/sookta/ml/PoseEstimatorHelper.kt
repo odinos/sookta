@@ -3,6 +3,9 @@ package com.kdev.sookta.utils
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.PointF
+import com.kdev.sookta.ml.KeyPoint
+import com.kdev.sookta.ml.Person
+import com.kdev.sookta.ml.PoseLandmark
 import com.kdev.sookta.model.RebaInputData
 import org.tensorflow.lite.DataType
 import org.tensorflow.lite.Interpreter
@@ -13,6 +16,8 @@ import org.tensorflow.lite.support.image.ops.ResizeOp
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer
 import kotlin.math.abs
 import kotlin.math.atan2
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 /**
  * Helper class สำหรับใช้ AI (MoveNet Thunder) ประเมินท่าทาง
@@ -22,6 +27,9 @@ class PoseEstimatorHelper(val context: Context) {
 
     private var interpreter: Interpreter? = null
     private var imageProcessor: ImageProcessor? = null
+
+    // MoveNet Thunder ใช้ Input ขนาด 256x256
+    private var inputShape = intArrayOf(1, 256, 256, 3)
 
     // MoveNet Thunder ต้องการ input ขนาด 256x256
     private val inputSize = 256
@@ -48,6 +56,66 @@ class PoseEstimatorHelper(val context: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+    /**
+     * ฟังก์ชันหลัก: รับ Bitmap -> คืนค่า List<Person>
+     * แก้ไขปัญหา Unresolved reference
+     */
+    fun estimatePoses(bitmap: Bitmap): List<Person> {
+        if (interpreter == null) setupInterpreter()
+        val tflite = interpreter ?: return emptyList()
+
+        // 1. ปรับขนาดภาพ (Resize)
+        val inputHeight = inputShape[1]
+        val inputWidth = inputShape[2]
+        val resizedBitmap = Bitmap.createScaledBitmap(bitmap, inputWidth, inputHeight, true)
+
+        // 2. แปลงภาพเป็น ByteBuffer
+        val inputTensor = tflite.getInputTensor(0)
+        val inputBuffer = convertBitmapToByteBuffer(resizedBitmap, inputTensor.dataType())
+
+        // 3. เตรียมที่รองรับผลลัพธ์
+        // Shape: [1, 1, 17, 3] -> [Batch, Person, Keypoints, (y, x, score)]
+        val outputBuffer = Array(1) { Array(1) { Array(17) { FloatArray(3) } } }
+
+        // 4. สั่งประมวลผล (Inference)
+        tflite.run(inputBuffer, outputBuffer)
+
+        // 5. แปลงข้อมูลเป็น Object Person
+        val detectedPersons = mutableListOf<Person>()
+        val keyPointsData = outputBuffer[0][0] // ข้อมูล Keypoints ของคนแรก
+
+        val mappedKeyPoints = mutableListOf<KeyPoint>()
+        var totalScore = 0f
+
+        for (i in keyPointsData.indices) {
+            // MoveNet คืนค่าเป็น [y, x, score] ค่าเป็น Normalized (0.0 - 1.0)
+            val y = keyPointsData[i][0]
+            val x = keyPointsData[i][1]
+            val score = keyPointsData[i][2]
+
+            mappedKeyPoints.add(
+                KeyPoint(
+                    bodyPart = PoseLandmark.fromInt(i), // Map index 0-16 เป็นชื่ออวัยวะ
+                    coordinate = PointF(x, y),          // ใส่ x, y ให้ถูกแกน
+                    score = score
+                )
+            )
+            totalScore += score
+        }
+
+        val person = Person(
+            id = 0,
+            keyPoints = mappedKeyPoints,
+            score = totalScore / 17.0f // คะแนนเฉลี่ย
+        )
+
+        // กรองเฉพาะที่มีความมั่นใจในระดับหนึ่ง (ป้องกัน Noise)
+        if (person.score > 0.2f) {
+            detectedPersons.add(person)
+        }
+
+        return detectedPersons
     }
 
     /**
@@ -193,5 +261,40 @@ class PoseEstimatorHelper(val context: Context) {
     // ปิด Interpreter เมื่อไม่ใช้ (เรียกใน OnDestroy ของ Activity/Fragment ถ้าทำได้)
     fun close() {
         interpreter?.close()
+    }
+
+    private fun convertBitmapToByteBuffer(bitmap: Bitmap, dataType: DataType): ByteBuffer {
+        val inputSize = inputShape[1]
+
+        // [Fix] ตรวจสอบว่าเป็น Hardware Bitmap หรือไม่ (Crash Fix)
+        // ถ้าเป็น Hardware Bitmap จะไม่สามารถใช้ getPixels ได้ ต้องแปลงเป็น ARGB_8888 ก่อน
+        val safeBitmap = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && bitmap.config == Bitmap.Config.HARDWARE) {
+            bitmap.copy(Bitmap.Config.ARGB_8888, false)
+        } else {
+            bitmap
+        }
+
+        // จองพื้นที่หน่วยความจำ (4 bytes ต่อ float)
+        val byteBuffer = ByteBuffer.allocateDirect(4 * 1 * inputSize * inputSize * 3)
+        byteBuffer.order(ByteOrder.nativeOrder())
+
+        val intValues = IntArray(inputSize * inputSize)
+        // ใช้ safeBitmap แทน bitmap เดิม
+        safeBitmap.getPixels(intValues, 0, safeBitmap.width, 0, 0, safeBitmap.width, safeBitmap.height)
+
+        for (pixelValue in intValues) {
+            // แยกสี RGB (MoveNet Thunder ปกติใช้ค่า float 0-255 หรือ int 0-255 แล้วแต่รุ่น)
+            // รุ่นมาตรฐานจาก TFHub มักรับเป็น Float
+            byteBuffer.putFloat(((pixelValue shr 16) and 0xFF).toFloat()) // R
+            byteBuffer.putFloat(((pixelValue shr 8) and 0xFF).toFloat())  // G
+            byteBuffer.putFloat((pixelValue and 0xFF).toFloat())          // B
+        }
+
+        // ถ้ามีการสร้าง Bitmap ใหม่ (copy) ให้ recycle เพื่อคืน Memory (Optional)
+        if (safeBitmap != bitmap) {
+            safeBitmap.recycle()
+        }
+
+        return byteBuffer
     }
 }

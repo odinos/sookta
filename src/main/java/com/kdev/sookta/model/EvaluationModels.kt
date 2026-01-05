@@ -35,6 +35,8 @@ data class ErgoInputData(
     val verticalHeight: Double = 75.0,
     val liftFrequency: Double = 0.2,
     val durationHours: Double = 1.0,
+    // **Feature Request: ระยะทางขนย้าย (เมตร)**
+    val transportDistance: Double = 0.0,
     // Push/Pull
     val initialForce: Double = 0.0,
     val sustainForce: Double = 0.0

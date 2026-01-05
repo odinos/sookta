@@ -114,23 +114,23 @@ fun ContactScreen(navController: NavController) {
                     Spacer(Modifier.height(8.dp))
 
                     // มหาวิทยาลัยธรรมศาสตร์
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.School, null, tint = Color.Gray, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.contact_university), // "มหาวิทยาลัยธรรมศาสตร์"
-                            fontSize = 16.sp,
-                            color = Color.DarkGray,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+//                    Row(verticalAlignment = Alignment.CenterVertically) {
+//                        Icon(Icons.Default.School, null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+//                        Spacer(Modifier.width(8.dp))
+//                        Text(
+//                            text = stringResource(R.string.contact_university), // "มหาวิทยาลัยธรรมศาสตร์"
+//                            fontSize = 16.sp,
+//                            color = Color.DarkGray,
+//                            fontWeight = FontWeight.Medium
+//                        )
+//                    }
 
                     // คณะ (ถ้าต้องการแสดง)
-                    Text(
-                        text = stringResource(R.string.contact_faculty),
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
+//                    Text(
+//                        text = stringResource(R.string.contact_faculty),
+//                        fontSize = 14.sp,
+//                        color = Color.Gray
+//                    )
 
                     Spacer(Modifier.height(24.dp))
                     HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
@@ -157,7 +157,7 @@ fun ContactScreen(navController: NavController) {
 
             // Footer แสดง Version
             Text(
-                text = stringResource(R.string.app_version, "1.0.2"),
+                text = stringResource(R.string.app_version, "1.0.3"),
                 fontSize = 12.sp,
                 color = Color.LightGray
             )
