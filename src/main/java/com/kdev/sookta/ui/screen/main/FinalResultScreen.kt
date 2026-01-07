@@ -1,6 +1,10 @@
 package com.kdev.sookta.ui.screen.main
 
+import android.content.Context
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -8,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Home
@@ -18,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,59 +34,53 @@ import androidx.navigation.NavController
 import com.kdev.sookta.R
 import com.kdev.sookta.data.AppDatabase
 import com.kdev.sookta.data.EvaluationEntity
-import com.kdev.sookta.model.BodyPart
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.RiskLevel
 import com.kdev.sookta.ui.component.TTSButton
 import com.kdev.sookta.utils.AnalyticsManager
 import com.kdev.sookta.utils.TextToSpeechManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreArg: Int, activityNameArg: String) {
     val context = LocalContext.current
+    val resources = context.resources
+    val packageName = context.packageName
+
     val db = remember { AppDatabase.getDatabase(context) }
     val analyticsManager = remember { AnalyticsManager(context) }
-    // แปลงชื่อกิจกรรม (เผื่อกรณีส่งมาเป็น ID)
+
     val displayActivityName = activityNameArg.toIntOrNull()?.let { stringResource(it) } ?: activityNameArg
     val ttsManager = remember { TextToSpeechManager(context) }
     DisposableEffect(Unit) { onDispose { ttsManager.shutdown() } }
-    // 1. ดึงข้อมูล
+
     val savedStateHandle = navController.previousBackStackEntry?.savedStateHandle
     val initialResult = savedStateHandle?.get<ErgoResult>("initialResult")
     val finalResult = savedStateHandle?.get<ErgoResult>("finalResult")
-    // Note: Suggestions ที่ส่งมาจะเป็น List of KEYS (String)
     val selectedSuggestionKeys = savedStateHandle?.get<ArrayList<String>>("selectedSuggestions") ?: emptyList<String>()
 
-    // แปลง Key กลับเป็นข้อความภาษาปัจจุบันเพื่อแสดงผล
     val selectedSuggestionsDisplay = remember(selectedSuggestionKeys) {
         selectedSuggestionKeys.mapNotNull { key ->
-            // ถ้า key เป็นตัวเลข (ResID string)
             if (key.all { it.isDigit() }) {
-                try { context.getString(key.toInt()) } catch (e: Exception) { null }
+                try {
+                    resources.getString(key.toInt())
+                } catch (e: Exception) {
+                    null
+                }
             } else {
-                // ถ้า key เป็น String Key (เช่น "act_reduce_weight")
-                getResString(context, key) ?: key // Fallback to key if not found
+                val resId = resources.getIdentifier(key, "string", packageName)
+                if (resId != 0) resources.getString(resId) else key
             }
         }
     }
 
-    // 2. ใช้ User Score
     val beforeScore = initialResult?.userScore ?: oldScoreArg
     val afterScore = finalResult?.userScore ?: newScoreArg
 
     var isSaved by rememberSaveable { mutableStateOf(false) }
 
-    // [ส่วนสำคัญ] บันทึกลง Database พร้อมข้อมูลใหม่
     LaunchedEffect(Unit) {
         if (!isSaved && initialResult != null && finalResult != null) {
-
-            // แปลง Map BodyPart เป็น String เพื่อเก็บใน DB (Format: "NECK:HIGH,TRUNK:LOW")
             val bodyMapString = initialResult.bodyPartRisks.entries.joinToString(",") { "${it.key.name}:${it.value.name}" }
-
-            // บันทึก Suggestions เป็น String (เก็บ Key ไว้ หรือเก็บ Text ก็ได้ แต่แนะนำ Text สำหรับ History ง่ายๆ)
-            // หรือถ้าจะ Advance คือเก็บ Key แล้วตอนโหลด History ค่อยแปลกลับ
-            // ในที่นี้เก็บเป็น Text ที่แสดงผลเลยเพื่อความง่ายในการเรียกดูย้อนหลัง
             val suggestionStringToSave = selectedSuggestionsDisplay.joinToString(", ")
 
             val entity = EvaluationEntity(
@@ -91,24 +91,21 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
                 riskBefore = initialResult.riskLevel.name,
                 riskAfter = finalResult.riskLevel.name,
                 improvementNote = suggestionStringToSave,
-
-                // [NEW] บันทึก Economic Loss และ Body Map
                 economicLoss = initialResult.economicLoss,
                 bodyMapData = bodyMapString
             )
 
-            val moneySaved = initialResult.economicLoss - finalResult.economicLoss
-
+            val moneySavedCalc = initialResult.economicLoss - finalResult.economicLoss
 
             db.evaluationDao().insertEvaluation(entity)
             analyticsManager.logEvaluationSaved(
                 activityName = displayActivityName,
-                jobType = "General", // หรือถ้าคุณมี JobType ส่งมาด้วยจะดีมาก
+                jobType = "General",
                 scoreBefore = initialResult.userScore,
                 scoreAfter = finalResult.userScore,
                 riskLevelBefore = initialResult.riskLevel.name,
                 riskLevelAfter = finalResult.riskLevel.name,
-                moneySaved = if(moneySaved > 0) moneySaved else 0
+                moneySaved = if(moneySavedCalc > 0) moneySavedCalc else 0
             )
             selectedSuggestionKeys.forEach { key ->
                 analyticsManager.logSuggestionSelected(key)
@@ -124,7 +121,6 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
     val beforeColor = initialResult?.userScoreColor?.let { Color(it) } ?: Color.Gray
     val afterColor = finalResult?.userScoreColor?.let { Color(it) } ?: Color(0xFF4CAF50)
 
-    // 3. คำนวณความสูญเสีย
     val lossBefore = initialResult?.economicLoss ?: 0
     val lossAfter = finalResult?.economicLoss ?: 0
     val moneySaved = lossBefore - lossAfter
@@ -139,7 +135,6 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
     ) {
         Spacer(Modifier.height(30.dp))
 
-        // Icon Success
         Icon(
             imageVector = Icons.Default.CheckCircle,
             contentDescription = null,
@@ -163,7 +158,6 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
         Spacer(Modifier.height(32.dp))
 
-        // --- ส่วนเปรียบเทียบ Before vs After ---
         Card(
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -188,16 +182,67 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
                 HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
                 Spacer(Modifier.height(16.dp))
 
-                if (moneySaved > 0) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.MonetizationOn, null, tint = Color(0xFFFFA000))
-                        Spacer(Modifier.width(8.dp))
-                        Column {
-                            Text(stringResource(R.string.money_saved_title), fontSize = 14.sp, color = Color.Gray)
-                            Text(stringResource(R.string.money_saved_unit, moneySaved), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                // --- ปรับปรุงการแสดงผล Economic Loss ---
+                if (moneySaved > 0 || (lossBefore > 0 && lossAfter < lossBefore)) {
+                    Text("ผลกระทบทางเศรษฐกิจ", fontSize = 14.sp, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Before Loss (Red)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "$lossBefore",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFD32F2F) // Red
+                            )
+                            Text("บาท/ปี", fontSize = 12.sp, color = Color.Gray)
+                        }
+
+                        Spacer(Modifier.width(16.dp))
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = Color.Gray, modifier = Modifier.rotate(-90f)) // Right Arrow
+                        Spacer(Modifier.width(16.dp))
+
+                        // After Loss (Green if 0, else Orange/Green)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "$lossAfter",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (lossAfter == 0) Color(0xFF4CAF50) else Color(0xFFFF9800) // Green or Orange
+                            )
+                            Text("บาท/ปี", fontSize = 12.sp, color = Color.Gray)
                         }
                     }
-                } else if (lossAfter == 0) {
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // Money Saved Badge
+                    Surface(
+                        color = Color(0xFFE8F5E9),
+                        shape = RoundedCornerShape(16.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA5D6A7))
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.MonetizationOn, null, tint = Color(0xFF2E7D32), modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "ประหยัดได้ $moneySaved บาท!",
+                                color = Color(0xFF2E7D32),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+
+                } else if (lossAfter == 0 && lossBefore == 0) {
                     Text(stringResource(R.string.money_safe), color = Color(0xFF2E7D32), fontWeight = FontWeight.Bold)
                 } else {
                     Text(stringResource(R.string.money_risk_remain, lossAfter), color = Color(0xFFD32F2F), fontSize = 14.sp)
@@ -207,26 +252,21 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
         Spacer(Modifier.height(24.dp))
 
-        // [เพิ่ม] แสดง Body Map ในหน้า Final ด้วย เพื่อให้ครบตาม Requirement
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.risky_point_header), fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(16.dp))
 
                 if (initialResult != null) {
-                    // 1. วาดรูป Body Map
                     BodyMapVisualization(bodyRisks = initialResult.bodyPartRisks)
-
                     Spacer(Modifier.height(16.dp))
 
-                    // 2. [NEW] วนลูปแสดงรายชื่อจุดเสี่ยง (เหมือน InitialRiskScreen)
                     val riskyParts = initialResult.bodyPartRisks.filter { it.value != RiskLevel.LOW }
                     if (riskyParts.isNotEmpty()) {
                         riskyParts.forEach { (part, level) ->
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 4.dp)) {
                                 Box(Modifier.size(10.dp).background(Color(level.colorHex), CircleShape))
                                 Spacer(Modifier.width(8.dp))
-                                // ใช้ Helper function แปลงเป็นภาษา
                                 Text("${getBodyPartName(part)}: ${getRiskLevelName(level)}", fontSize = 14.sp, color = Color.DarkGray)
                             }
                         }
@@ -239,7 +279,6 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
         Spacer(Modifier.height(24.dp))
 
-        // --- ส่วนแสดงคำแนะนำที่เลือก ---
         if (selectedSuggestionsDisplay.isNotEmpty()) {
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F5E9)),
@@ -286,7 +325,6 @@ fun FinalResultScreen(navController: NavController, oldScoreArg: Int, newScoreAr
 
         Spacer(Modifier.weight(1f))
 
-        // ปุ่มกลับหน้าหลัก
         Button(
             onClick = {
                 navController.navigate("main") {
@@ -320,3 +358,4 @@ fun RiskScoreItem(score: Int, color: Color, label: String) {
         }
     }
 }
+

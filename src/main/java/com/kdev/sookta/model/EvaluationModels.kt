@@ -44,7 +44,6 @@ data class ErgoInputData(
 
 @Parcelize
 data class RebaInputData(
-
     val dailyIncome: Double = 300.0,
     val trunkScore: Int = 1,
     val neckScore: Int = 1,

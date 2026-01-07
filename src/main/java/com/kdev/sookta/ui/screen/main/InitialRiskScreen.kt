@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,15 +28,11 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.R
 import com.kdev.sookta.model.BodyPart
-import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
-import com.kdev.sookta.model.JobType
-import com.kdev.sookta.model.RebaInputData
 import com.kdev.sookta.model.RiskLevel
 import com.kdev.sookta.ui.component.TTSButton
-import com.kdev.sookta.utils.ErgoCalculatorHelper
 import com.kdev.sookta.utils.TextToSpeechManager
-import kotlin.math.max
+
 
 @Composable
 fun InitialRiskScreen(navController: NavController, activityNameArg: String, scoreArg: Int) {
@@ -64,8 +59,6 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
     val selectedSuggestionKeys = remember { mutableStateListOf<String>() }
 
     // --- สร้างรายการคำแนะนำ (Key + Label) ---
-    // [Fix 1] ใช้ getResString แบบ safe ไม่เรียก context ใน scope ที่ผิด
-    // ใช้ derivedStateOf เพื่อให้คำนวณใหม่เมื่อ input เปลี่ยนเท่านั้น (และ context มักไม่เปลี่ยน)
     val suggestionOptions = remember(initialResult, activityNameArg) {
         val options = mutableListOf<Pair<String, String>>()
 
@@ -90,13 +83,11 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
     }
 
     // --- เตรียมข้อความเสียงสำหรับผลลัพธ์ (Result TTS) ---
-    // [Fix 2] ดึงค่า String Resource มาเก็บเป็นตัวแปร Composable ปกติก่อน
-    // เพื่อหลีกเลี่ยงการเรียก context หรือ stringResource ในที่ที่ไม่ควร
     val riskLevelName = getRiskLevelName(initialResult.riskLevel)
     val riskLabel = stringResource(R.string.risk_level_label)
     val lossLabel = stringResource(R.string.loss_label)
     val riskyPartsHeader = stringResource(R.string.risky_parts_header)
-    val noRiskyPartsLabel = stringResource(R.string.no_risky_parts) // ดึงค่าตรงนี้เลย ไม่ต้อง try-catch
+    val noRiskyPartsLabel = stringResource(R.string.no_risky_parts)
 
     val neckStr = stringResource(R.string.part_neck)
     val trunkStr = stringResource(R.string.part_trunk)
@@ -209,7 +200,6 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
                                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 1.dp)) {
                                     Box(Modifier.size(8.dp).background(Color(level.colorHex), CircleShape))
                                     Spacer(Modifier.width(6.dp))
-                                    // [Fix] ใช้ getBodyPartName Composable ที่แก้ไขแล้ว
                                     Text(getBodyPartName(part), fontSize = 12.sp, color = Color.DarkGray)
                                 }
                             }
@@ -257,14 +247,13 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
 
                     Text(
                         text = label,
-                        fontSize = 15.sp, // เพิ่มขนาดตัวอักษรให้อ่านง่าย
+                        fontSize = 15.sp,
                         color = if (isSelected) Color(0xFF2E7D32) else Color.Black,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                         modifier = Modifier.weight(1f)
                     )
 
                     Spacer(Modifier.width(4.dp))
-                    // ปุ่มฟังเสียงคำแนะนำรายข้อ
                     TTSButton(text = label, ttsManager = ttsManager)
                 }
             }
@@ -275,11 +264,56 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
         // --- Summarize Button ---
         Button(
             onClick = {
+                // *** เพิ่ม Logic การคำนวณผลลัพธ์ใหม่ (Simulation) ที่นี่ ***
+                val improvedResult = if (selectedSuggestionKeys.isNotEmpty()) {
+                    // ลดคะแนนลงประมาณ 30% หรืออย่างน้อย 1-3 แต้มตามความรุนแรง
+                    val currentScore = initialResult.userScore
+                    val reduction = when {
+                        currentScore >= 8 -> 3
+                        currentScore >= 5 -> 2
+                        else -> 1
+                    }
+                    val newScore = (currentScore - reduction).coerceAtLeast(1)
+
+                    // คำนวณระดับความเสี่ยงและสีใหม่
+                    val newRiskLevel = when {
+                        newScore <= 3 -> RiskLevel.LOW
+                        newScore <= 7 -> RiskLevel.MEDIUM
+                        else -> RiskLevel.HIGH
+                    }
+                    val newColor = when {
+                        newScore <= 3 -> 0xFF4CAF50 // Green
+                        newScore <= 7 -> 0xFFFFC107 // Yellow
+                        else -> 0xFFF44336 // Red
+                    }
+
+                    // ลดความสูญเสียทางเศรษฐกิจ
+                    val newLoss = if (newRiskLevel == RiskLevel.LOW) 0 else (initialResult.economicLoss * 0.5).toInt()
+
+                    // ลดความเสี่ยงของอวัยวะลง 1 ระดับ (จำลอง)
+                    val newBodyRisks = initialResult.bodyPartRisks.mapValues { (_, level) ->
+                        when (level) {
+                            RiskLevel.VERY_HIGH -> RiskLevel.HIGH
+                            RiskLevel.HIGH -> RiskLevel.MEDIUM
+                            else -> RiskLevel.LOW
+                        }
+                    }
+
+                    initialResult.copy(
+                        userScore = newScore,
+                        riskLevel = newRiskLevel,
+                        userScoreColor = newColor,
+                        economicLoss = newLoss,
+                        bodyPartRisks = newBodyRisks
+                    )
+                } else {
+                    initialResult // ถ้าไม่เลือกคำแนะนำ คะแนนเท่าเดิม
+                }
+
                 navController.currentBackStackEntry?.savedStateHandle?.set("initialResult", initialResult)
-                // เนื่องจากตัด Simulation ออก finalResult จึงเท่ากับ initialResult
-                navController.currentBackStackEntry?.savedStateHandle?.set("finalResult", initialResult)
+                navController.currentBackStackEntry?.savedStateHandle?.set("finalResult", improvedResult) // ส่งผลลัพธ์ที่คำนวณใหม่ไป
                 navController.currentBackStackEntry?.savedStateHandle?.set("selectedSuggestions", ArrayList(selectedSuggestionKeys))
-                navController.navigate("final_result/${initialResult.userScore}/${initialResult.userScore}/$activityNameArg")
+                navController.navigate("final_result/${initialResult.userScore}/${improvedResult.userScore}/$activityNameArg")
             },
             modifier = Modifier.fillMaxWidth().height(50.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
@@ -292,27 +326,22 @@ fun InitialRiskScreen(navController: NavController, activityNameArg: String, sco
 
 // --- Helper Functions ---
 
-// [Fix] ใช้ logic ที่ปลอดภัย ไม่เรียก context.getString ใน Composable scope โดยตรง
 fun getResString(context: Context, key: String): String? {
     return try {
-        // 1. ลองแปลง key เป็น Int (กรณีเป็น Resource ID "213123...")
         if (key.all { it.isDigit() }) {
             val resId = key.toInt()
-            // ใช้ context.getString ได้เพราะนี่คือ Normal Function (ไม่ใช่ Composable Scope โดยตรง)
             context.getString(resId)
         } else {
-            // 2. กรณีเป็น String Key ("act_reduce_weight")
             val resId = context.resources.getIdentifier(key, "string", context.packageName)
             if (resId != 0) context.getString(resId) else null
         }
     } catch (e: Exception) {
-        null // คืนค่า null หากเกิดข้อผิดพลาดใดๆ
+        null
     }
 }
 
 @Composable
 fun getBodyPartName(part: BodyPart): String {
-    // ใช้ stringResource โดยตรงใน Composable function
     return when (part) {
         BodyPart.NECK -> stringResource(R.string.part_neck)
         BodyPart.TRUNK -> stringResource(R.string.part_trunk)
@@ -363,16 +392,14 @@ fun BodyMapVisualization(bodyRisks: Map<BodyPart, RiskLevel>) {
             val stroke = Stroke(width = 5f, cap = StrokeCap.Round)
             val colorBody = Color.LightGray
 
-            // วาดคน (Stickman)
-            drawCircle(colorBody, radius = w * 0.12f, center = Offset(w / 2, h * 0.15f), style = stroke) // หัว
-            drawLine(colorBody, start = Offset(w / 2, h * 0.2f), end = Offset(w / 2, h * 0.55f), strokeWidth = 5f, cap = StrokeCap.Round) // ลำตัว
-            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.15f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round) // แขนซ้าย
-            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.85f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round) // แขนขวา
-            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.25f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round) // ขาซ้าย
-            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.75f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round) // ขาขวา
+            drawCircle(colorBody, radius = w * 0.12f, center = Offset(w / 2, h * 0.15f), style = stroke)
+            drawLine(colorBody, start = Offset(w / 2, h * 0.2f), end = Offset(w / 2, h * 0.55f), strokeWidth = 5f, cap = StrokeCap.Round)
+            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.15f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round)
+            drawLine(colorBody, start = Offset(w / 2, h * 0.25f), end = Offset(w * 0.85f, h * 0.4f), strokeWidth = 5f, cap = StrokeCap.Round)
+            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.25f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round)
+            drawLine(colorBody, start = Offset(w / 2, h * 0.55f), end = Offset(w * 0.75f, h * 0.9f), strokeWidth = 5f, cap = StrokeCap.Round)
         }
 
-        // Overlay จุดสีตามความเสี่ยง
         bodyRisks[BodyPart.NECK]?.let { RiskDot(Modifier.align(Alignment.TopCenter).offset(y = 25.dp), it) }
         bodyRisks[BodyPart.TRUNK]?.let { RiskDot(Modifier.align(Alignment.Center).offset(y = (-20).dp), it) }
         bodyRisks[BodyPart.ARMS]?.let {

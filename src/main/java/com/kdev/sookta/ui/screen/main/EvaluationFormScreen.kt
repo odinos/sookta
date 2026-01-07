@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.kdev.sookta.R
 import com.kdev.sookta.data.AppDatabase
-import com.kdev.sookta.ml.Person
 import com.kdev.sookta.model.ErgoInputData
 import com.kdev.sookta.model.ErgoResult
 import com.kdev.sookta.model.JobType
@@ -123,38 +122,62 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
     var inputTransportDist by remember { mutableStateOf("0") }
 
     // ==========================================
-    // **NEW Feature: Auto-fill Dropdowns from Image**
+    // **NEW Feature: Auto-fill from Image**
     // ==========================================
-    LaunchedEffect(selectedBitmaps.size) { // ทำงานเมื่อจำนวนรูปภาพเปลี่ยน
-        if (selectedBitmaps.isNotEmpty() && currentJobType == JobType.REBA) {
-            withContext(Dispatchers.Default) { // ทำงานใน Background Thread
-                var maxTrunk = 1
-                var maxNeck = 1
-                var maxUpperArm = 1
-                var maxLeg = 1
+    LaunchedEffect(selectedBitmaps.size) {
+        if (selectedBitmaps.isNotEmpty()) {
+            withContext(Dispatchers.Default) {
 
-                // วนลูปทุกรูปเพื่อหาท่าที่เสี่ยงที่สุด
-                selectedBitmaps.forEach { bitmap ->
-                    val persons = poseHelper.estimatePoses(bitmap)
-                    val person = persons.firstOrNull()
-                    if (person != null) {
-                        val aiInput = ErgoCalculatorHelper.calculateRebaInputFromPose(person, RebaInputData())
-                        if (aiInput.trunkScore > maxTrunk) maxTrunk = aiInput.trunkScore
-                        if (aiInput.neckScore > maxNeck) maxNeck = aiInput.neckScore
-                        if (aiInput.upperArmScore > maxUpperArm) maxUpperArm = aiInput.upperArmScore
-                        if (aiInput.legScore > maxLeg) maxLeg = aiInput.legScore
+                if (currentJobType == JobType.REBA) {
+                    // Logic สำหรับ REBA
+                    var maxTrunk = 1
+                    var maxNeck = 1
+                    var maxUpperArm = 1
+                    var maxLeg = 1
+
+                    selectedBitmaps.forEach { bitmap ->
+                        val persons = poseHelper.estimatePoses(bitmap)
+                        val person = persons.firstOrNull()
+                        if (person != null) {
+                            val aiInput = ErgoCalculatorHelper.calculateRebaInputFromPose(person, RebaInputData())
+                            if (aiInput.trunkScore > maxTrunk) maxTrunk = aiInput.trunkScore
+                            if (aiInput.neckScore > maxNeck) maxNeck = aiInput.neckScore
+                            if (aiInput.upperArmScore > maxUpperArm) maxUpperArm = aiInput.upperArmScore
+                            if (aiInput.legScore > maxLeg) maxLeg = aiInput.legScore
+                        }
                     }
-                }
 
-                // อัปเดต UI ใน Main Thread
-                withContext(Dispatchers.Main) {
-                    // เลือก Dropdown ตามคะแนนที่ได้ (Score 1 = Index 0)
-                    if (maxTrunk - 1 in trunkOptions.indices) rebaTrunk = trunkOptions[maxTrunk - 1]
-                    if (maxNeck - 1 in neckOptions.indices) rebaNeck = neckOptions[maxNeck - 1]
-                    if (maxLeg - 1 in legOptions.indices) rebaLeg = legOptions[maxLeg - 1]
-                    if (maxUpperArm - 1 in upperArmOptions.indices) rebaUpperArm = upperArmOptions[maxUpperArm - 1]
+                    withContext(Dispatchers.Main) {
+                        if (maxTrunk - 1 in trunkOptions.indices) rebaTrunk = trunkOptions[maxTrunk - 1]
+                        if (maxNeck - 1 in neckOptions.indices) rebaNeck = neckOptions[maxNeck - 1]
+                        if (maxLeg - 1 in legOptions.indices) rebaLeg = legOptions[maxLeg - 1]
+                        if (maxUpperArm - 1 in upperArmOptions.indices) rebaUpperArm = upperArmOptions[maxUpperArm - 1]
+                        Toast.makeText(context, "AI ปรับท่าทาง REBA ตามภาพแล้ว", Toast.LENGTH_SHORT).show()
+                    }
 
-                    Toast.makeText(context, "AI ปรับข้อมูลตามภาพแล้ว", Toast.LENGTH_SHORT).show()
+                } else if (currentJobType == JobType.LIFTING) {
+                    // อ่านค่า Horizontal/Vertical จากภาพสำหรับงานขนย้าย
+                    var estH = 25.0
+                    var estV = 75.0
+                    var found = false
+
+                    val bitmap = selectedBitmaps.last() // ใช้รูปล่าสุด
+                    val dimensions = poseHelper.estimateLiftingDimensions(bitmap)
+                    if (dimensions != null) {
+                        estH = dimensions.first
+                        estV = dimensions.second
+                        found = true
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        if (found) {
+                            inputHorizontalDist = estH.toInt().toString()
+                            inputVerticalHeight = estV.toInt().toString()
+                            Toast.makeText(context, "AI อ่านระยะ H=$estH, V=$estV จากภาพ", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "ไม่พบคนในภาพ ใช้ค่ามาตรฐาน", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
@@ -271,6 +294,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
 
                     Text(stringResource(R.string.form_section_advanced), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // สีตัวอักษรเป็นสีดำชัดเจน (Color.Black)
                         OutlinedTextField(
                             value = inputHorizontalDist,
                             onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputHorizontalDist = it },
@@ -278,7 +302,11 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF5C9A81))
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF5C9A81), unfocusedBorderColor = Color.LightGray
+                            )
                         )
                         OutlinedTextField(
                             value = inputVerticalHeight,
@@ -287,7 +315,11 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF5C9A81))
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF5C9A81), unfocusedBorderColor = Color.LightGray
+                            )
                         )
                     }
 
@@ -304,7 +336,11 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                                     onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputTransportDist = it },
                                     placeholder = { Text("0") }, modifier = Modifier.fillMaxWidth(),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,
-                                    colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF2E7D32))
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                        focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                        focusedBorderColor = Color(0xFF2E7D32), unfocusedBorderColor = Color.LightGray
+                                    )
                                 )
                             }
                         }
@@ -319,13 +355,21 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                             value = inputForceInitial, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceInitial = it },
                             label = { Text(stringResource(R.string.label_force_initial)) }, modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF5C9A81))
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF5C9A81), unfocusedBorderColor = Color.LightGray
+                            )
                         )
                         OutlinedTextField(
                             value = inputForceSustain, onValueChange = { if (it.all { c -> c.isDigit() || c == '.' }) inputForceSustain = it },
                             label = { Text(stringResource(R.string.label_force_sustain)) }, modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = Color.White, unfocusedContainerColor = Color.White, focusedBorderColor = Color(0xFF5C9A81))
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color.White, unfocusedContainerColor = Color.White,
+                                focusedTextColor = Color.Black, unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF5C9A81), unfocusedBorderColor = Color.LightGray
+                            )
                         )
                     }
                 }
@@ -354,11 +398,6 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                     analyticsManager.logAction("click_analyze", label = currentJobType.name)
 
                     if (currentJobType == JobType.REBA) {
-                        // Logic เหมือนเดิม แต่ตอนนี้ User อาจจะเห็นค่าที่ Auto-fill แล้วและแก้ไขแล้ว
-                        // ดังนั้นเราจะใช้ค่าจากตัวแปร State (Dropdown) เป็นหลักได้เลย
-                        // หรือจะคำนวณซ้ำเพื่อความชัวร์ก็ได้ แต่ในที่นี้เพื่อความง่ายและตรงกับสิ่งที่ User เห็น
-                        // เราจะใช้ค่าจาก Dropdown (rebaTrunk, rebaNeck...) ไป map กลับเป็น score
-
                         val mergedInput = RebaInputData(
                             dailyIncome = userDailyIncome,
                             trunkScore = trunkOptions.indexOf(rebaTrunk) + 1,
@@ -366,13 +405,11 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                             upperArmScore = upperArmOptions.indexOf(rebaUpperArm) + 1,
                             legScore = legOptions.indexOf(rebaLeg) + 1,
                             loadScore = loadScoreOptions.indexOf(rebaLoad),
-
                             lowerArmScore = 1, wristScore = 1, couplingScore = 0, activityScore = 0
                         )
                         inputData = mergedInput
                         result = ErgoCalculatorHelper.calculateRebaRisk(mergedInput)
                     } else {
-                        // ISO Logic
                         val weightVal = when (selectedWeight) {
                             weightOptions[0] -> 5.0; weightOptions[1] -> 10.0; weightOptions[2] -> 15.0
                             weightOptions[3] -> 20.0; else -> 25.0
@@ -397,8 +434,10 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
                         result = if (currentJobType == JobType.LIFTING) ErgoCalculatorHelper.calculateLiftingRisk(ergoInput) else ErgoCalculatorHelper.calculatePushPullRisk(ergoInput)
                     }
 
+                    // --- แก้ไข: ส่งข้อมูลผ่าน savedStateHandle และนำทางไป initial_risk ตามที่ถูกต้อง ---
                     navController.currentBackStackEntry?.savedStateHandle?.set("riskResult", result)
                     navController.currentBackStackEntry?.savedStateHandle?.set("inputData", inputData)
+
                     navController.navigate("initial_risk/$activityNameArg/${result.userScore}")
                 },
                 enabled = selectedBitmaps.isNotEmpty() || (currentJobType != JobType.REBA && selectedWeight.isNotEmpty()),
@@ -413,7 +452,7 @@ fun EvaluationFormScreen(navController: NavController, activityNameArg: String) 
     }
 }
 
-// Helper Composables คงเดิม...
+// Helper Composables
 @Composable
 fun ImageSlotCard(bitmap: Bitmap?, modifier: Modifier = Modifier, onAddClick: () -> Unit, onDeleteClick: () -> Unit, enabled: Boolean = true) {
     Box(
