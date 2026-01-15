@@ -24,8 +24,8 @@ android {
         applicationId = "com.kdev.sookta"
         minSdk = 24
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.03"
+        versionCode = 4
+        versionName = "1.04"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
