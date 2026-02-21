@@ -1,7 +1,7 @@
 [versions]
-agp = "8.13.2"
-kotlin = "2.0.21" # UPDATED: Aligned with Compose Compiler
-ksp = "2.0.21-1.0.25" # ADDED: KSP version
+agp = "9.0.1"
+kotlin = "2.2.10" # UPDATED: Aligned with Compose Compiler
+ksp = "2.3.2" # ADDED: KSP version
 coreKtx = "1.15.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
